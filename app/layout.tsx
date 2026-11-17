@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     template: "%s | Global Tax Nepal",
   },
   description:
-    "Professional tax consultancy, business consultancy, and technology services.",
+    "Professional tax and business consultancy, registration, accounting, documentation, compliance, and training services.",
 };
 
 type RootLayoutProps = Readonly<{

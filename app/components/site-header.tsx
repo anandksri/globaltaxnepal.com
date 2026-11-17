@@ -7,7 +7,7 @@ const links = [
   { href: "#home", label: "Home" },
   { href: "#about", label: "About Us" },
   { href: "#services", label: "Services" },
-  { href: "#cybersecurity", label: "Cybersecurity" },
+  { href: "#process", label: "Our Process" },
   { href: "#contact", label: "Contact" },
 ];
 
@@ -35,7 +35,7 @@ export function SiteHeader() {
               Global Tax Nepal
             </span>
             <span className="mt-1 hidden whitespace-nowrap text-[0.65rem] font-medium uppercase tracking-[0.16em] text-text-secondary min-[24rem]:inline">
-              Consultancy &amp; Technology
+              Tax &amp; Business Consultancy
             </span>
           </span>
         </a>
