@@ -39,7 +39,7 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
     items: [
       { label: "Client management", href: "/admin/clients", icon: Users },
       { label: "Client details", icon: ClipboardList },
-      { label: "Client documents", icon: Files },
+      { label: "Documents", href: "/admin/documents", icon: Files },
     ],
   },
   {

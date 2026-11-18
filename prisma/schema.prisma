@@ -48,6 +48,20 @@ enum AccountRecordType {
   EXPENSE
 }
 
+enum DocumentCategory {
+  PAN_CERTIFICATE
+  VAT_CERTIFICATE
+  COMPANY_REGISTRATION
+  TAX_CLEARANCE
+  CLIENT_IDENTIFICATION
+  BILL_INVOICE
+  RECEIPT_VOUCHER
+  PAYMENT_VOUCHER
+  AGREEMENT
+  SUPPORTING_DOCUMENT
+  OTHER
+}
+
 model User {
   id           String        @id @default(cuid())
   name         String?       @db.VarChar(100)
@@ -63,6 +77,7 @@ model User {
   createdPaymentVouchers PaymentVoucher[] @relation("PaymentVoucherCreatedBy")
   createdIncomeRecords IncomeRecord[] @relation("IncomeRecordCreatedBy")
   createdExpenseRecords ExpenseRecord[] @relation("ExpenseRecordCreatedBy")
+  uploadedDocuments Document[] @relation("DocumentUploadedBy")
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -101,6 +116,7 @@ model Client {
   bills           Bill[]
   receiptVouchers  ReceiptVoucher[]
   incomeRecords    IncomeRecord[]
+  documents        Document[]
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -332,6 +348,28 @@ model ExpenseRecord {
   @@index([expenseDate, createdAt])
   @@index([categoryId, expenseDate])
   @@index([paidTo])
+}
+
+model Document {
+  id              String           @id @default(cuid())
+  title           String           @db.VarChar(200)
+  category        DocumentCategory
+  description     String?          @db.VarChar(1000)
+  clientId        String?
+  client          Client?          @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  originalName    String           @db.VarChar(255)
+  storageKey      String           @unique @db.VarChar(100)
+  mimeType        String           @db.VarChar(100)
+  fileSize        Int
+  uploadedById    String
+  uploadedBy      User             @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([category, createdAt])
+  @@index([clientId, createdAt])
+  @@index([title])
+  @@index([createdAt])
 }
 
 model ActivityLog {

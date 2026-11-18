@@ -60,6 +60,14 @@ export function AdminPageTitle() {
     title = "Edit expense";
   } else if (pathname.startsWith("/admin/accounts/expenses/")) {
     title = "Expense details";
+  } else if (pathname === "/admin/documents") {
+    title = "Documents";
+  } else if (pathname === "/admin/documents/new") {
+    title = "Upload document";
+  } else if (pathname.includes("/documents/") && pathname.endsWith("/edit")) {
+    title = "Edit document details";
+  } else if (pathname.startsWith("/admin/documents/")) {
+    title = "Document details";
   } else if (pathname.endsWith("/edit")) {
     title = "Edit client";
   } else if (/^\/admin\/clients\/[^/]+$/.test(pathname)) {
