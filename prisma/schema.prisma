@@ -1,0 +1,350 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ClientType {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum BillStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+}
+
+enum BillType {
+  NORMAL
+  DETAILS
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CHEQUE
+  DIGITAL_WALLET
+  OTHER
+}
+
+enum VoucherType {
+  RECEIPT
+  PAYMENT
+}
+
+enum AccountCategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum AccountRecordType {
+  INCOME
+  EXPENSE
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String?       @db.VarChar(100)
+  email        String        @unique @db.VarChar(254)
+  passwordHash String        @db.VarChar(255)
+  isActive     Boolean       @default(true)
+  roleId       String
+  role         Role          @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  activityLogs ActivityLog[]
+  createdBills Bill[]        @relation("BillCreatedBy")
+  payments     Payment[]
+  createdReceiptVouchers ReceiptVoucher[] @relation("ReceiptVoucherCreatedBy")
+  createdPaymentVouchers PaymentVoucher[] @relation("PaymentVoucherCreatedBy")
+  createdIncomeRecords IncomeRecord[] @relation("IncomeRecordCreatedBy")
+  createdExpenseRecords ExpenseRecord[] @relation("ExpenseRecordCreatedBy")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([roleId])
+  @@index([isActive])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(50)
+  description String?  @db.VarChar(255)
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Client {
+  id              String     @id @default(cuid())
+  type            ClientType
+  displayName     String     @db.VarChar(200)
+  contactPerson   String?    @db.VarChar(200)
+  email           String?    @db.VarChar(254)
+  phone           String?    @db.VarChar(40)
+  province        String?    @db.VarChar(100)
+  district        String?    @db.VarChar(100)
+  municipality    String?    @db.VarChar(150)
+  wardNumber      Int?
+  streetAddress   String?    @db.VarChar(500)
+  address         String?    @db.VarChar(500)
+  panNumber       String?    @unique @db.VarChar(20)
+  vatRegistered   Boolean    @default(false)
+  vatNumber       String?    @db.VarChar(30)
+  registrationDate DateTime? @db.Date
+  notes           String?    @db.Text
+  isActive        Boolean    @default(true)
+  bills           Bill[]
+  receiptVouchers  ReceiptVoucher[]
+  incomeRecords    IncomeRecord[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([displayName])
+  @@index([type, createdAt])
+  @@index([phone])
+  @@index([isActive, createdAt])
+}
+
+model CompanySettings {
+  id        String   @id @default("company")
+  name      String?  @db.VarChar(200)
+  address   String?  @db.VarChar(500)
+  phone     String?  @db.VarChar(40)
+  email     String?  @db.VarChar(254)
+  website   String?  @db.VarChar(255)
+  currencyCode String @default("NPR") @db.VarChar(3)
+  invoicePrefix String? @db.VarChar(12)
+  paymentInstructions String? @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BillNumberSequence {
+  year         Int      @id
+  currentValue Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+model VoucherNumberSequence {
+  type         VoucherType
+  year         Int
+  currentValue Int         @default(0)
+  updatedAt    DateTime    @updatedAt
+
+  @@id([type, year])
+}
+
+model AccountNumberSequence {
+  type         AccountRecordType
+  year         Int
+  currentValue Int               @default(0)
+  updatedAt    DateTime          @updatedAt
+
+  @@id([type, year])
+}
+
+model AccountCategory {
+  id         String             @id @default(cuid())
+  type       AccountCategoryType
+  name       String             @db.VarChar(100)
+  isSystem   Boolean            @default(false)
+  incomeRecords IncomeRecord[]
+  expenseRecords ExpenseRecord[]
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@unique([type, name])
+  @@index([type, name])
+}
+
+model Bill {
+  id              String     @id @default(cuid())
+  billNumber      String     @unique @db.VarChar(40)
+  clientId        String
+  client          Client     @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  clientName      String     @db.VarChar(200)
+  contactPerson   String?    @db.VarChar(200)
+  clientEmail     String?    @db.VarChar(254)
+  clientPhone     String?    @db.VarChar(40)
+  clientAddress   String?    @db.VarChar(1000)
+  clientPanNumber String?    @db.VarChar(20)
+  clientVatNumber String?    @db.VarChar(30)
+  billDate        DateTime   @db.Date
+  dueDate         DateTime?  @db.Date
+  status          BillStatus @default(DRAFT)
+  billType        BillType   @default(NORMAL)
+  currencyCode    String     @default("NPR") @db.VarChar(3)
+  subtotal        Decimal    @db.Decimal(14, 2)
+  discount        Decimal    @default(0) @db.Decimal(14, 2)
+  taxableAmount   Decimal    @db.Decimal(14, 2)
+  vatApplied      Boolean    @default(false)
+  vatRate         Decimal    @default(0) @db.Decimal(5, 2)
+  vatAmount       Decimal    @default(0) @db.Decimal(14, 2)
+  totalAmount     Decimal    @db.Decimal(14, 2)
+  notes           String?    @db.Text
+  createdById     String
+  createdBy       User       @relation("BillCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  issuedAt        DateTime?
+  cancelledAt     DateTime?
+  cancellationReason String? @db.VarChar(500)
+  items           BillItem[]
+  payments        Payment[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([clientId, createdAt])
+  @@index([status, billDate])
+  @@index([billDate])
+  @@index([dueDate, status])
+  @@index([clientName])
+  @@index([billType, billDate])
+}
+
+model BillItem {
+  id          String   @id @default(cuid())
+  billId      String
+  bill        Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  description String   @db.VarChar(500)
+  quantity    Decimal  @db.Decimal(12, 3)
+  unit        String   @db.VarChar(30)
+  rate        Decimal  @db.Decimal(14, 2)
+  amount      Decimal  @db.Decimal(14, 2)
+  position    Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([billId, position])
+  @@index([billId])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  billId      String
+  bill        Bill          @relation(fields: [billId], references: [id], onDelete: Restrict)
+  receivedById String
+  receivedBy  User          @relation(fields: [receivedById], references: [id], onDelete: Restrict)
+  paymentDate DateTime      @db.Date
+  method      PaymentMethod
+  amount      Decimal       @db.Decimal(14, 2)
+  reference   String?       @db.VarChar(100)
+  notes       String?       @db.VarChar(1000)
+  incomeRecord IncomeRecord? @relation("IncomeRecordSourcePayment")
+  createdAt   DateTime      @default(now())
+
+  @@index([billId, paymentDate])
+  @@index([receivedById, createdAt])
+}
+
+model ReceiptVoucher {
+  id            String        @id @default(cuid())
+  voucherNumber String        @unique @db.VarChar(40)
+  clientId      String
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  clientName    String        @db.VarChar(200)
+  voucherDate   DateTime      @db.Date
+  amount        Decimal       @db.Decimal(14, 2)
+  currencyCode  String        @default("NPR") @db.VarChar(3)
+  method        PaymentMethod
+  reference     String?       @db.VarChar(100)
+  description   String        @db.VarChar(1000)
+  createdById   String
+  createdBy     User          @relation("ReceiptVoucherCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  incomeRecord  IncomeRecord? @relation("IncomeRecordSourceReceiptVoucher")
+
+  @@index([clientId, voucherDate])
+  @@index([voucherDate])
+}
+
+model PaymentVoucher {
+  id            String        @id @default(cuid())
+  voucherNumber String        @unique @db.VarChar(40)
+  voucherDate   DateTime      @db.Date
+  payeeName     String        @db.VarChar(200)
+  purpose       String        @db.VarChar(1000)
+  amount        Decimal       @db.Decimal(14, 2)
+  currencyCode  String        @default("NPR") @db.VarChar(3)
+  method        PaymentMethod
+  reference     String?       @db.VarChar(100)
+  createdById   String
+  createdBy     User          @relation("PaymentVoucherCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  expenseRecord ExpenseRecord? @relation("ExpenseRecordSourcePaymentVoucher")
+
+  @@index([voucherDate])
+  @@index([payeeName])
+}
+
+model IncomeRecord {
+  id                    String          @id @default(cuid())
+  referenceNumber       String          @unique @db.VarChar(40)
+  incomeDate            DateTime        @db.Date
+  categoryId            String
+  category              AccountCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  description           String          @db.VarChar(1000)
+  amount                Decimal         @db.Decimal(14, 2)
+  currencyCode          String          @default("NPR") @db.VarChar(3)
+  method                PaymentMethod
+  clientId              String?
+  client                Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  clientName            String?         @db.VarChar(200)
+  reference             String?         @db.VarChar(100)
+  sourcePaymentId       String?         @unique
+  sourcePayment         Payment?        @relation("IncomeRecordSourcePayment", fields: [sourcePaymentId], references: [id], onDelete: SetNull)
+  sourceReceiptVoucherId String?        @unique
+  sourceReceiptVoucher  ReceiptVoucher? @relation("IncomeRecordSourceReceiptVoucher", fields: [sourceReceiptVoucherId], references: [id], onDelete: SetNull)
+  createdById           String
+  createdBy             User            @relation("IncomeRecordCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@index([incomeDate, createdAt])
+  @@index([categoryId, incomeDate])
+  @@index([clientId, incomeDate])
+}
+
+model ExpenseRecord {
+  id                      String          @id @default(cuid())
+  referenceNumber         String          @unique @db.VarChar(40)
+  expenseDate             DateTime        @db.Date
+  categoryId              String
+  category                AccountCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  description             String          @db.VarChar(1000)
+  amount                  Decimal         @db.Decimal(14, 2)
+  currencyCode            String          @default("NPR") @db.VarChar(3)
+  method                  PaymentMethod
+  paidTo                  String          @db.VarChar(200)
+  reference               String?         @db.VarChar(100)
+  sourcePaymentVoucherId  String?         @unique
+  sourcePaymentVoucher    PaymentVoucher? @relation("ExpenseRecordSourcePaymentVoucher", fields: [sourcePaymentVoucherId], references: [id], onDelete: SetNull)
+  createdById             String
+  createdBy               User            @relation("ExpenseRecordCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  @@index([expenseDate, createdAt])
+  @@index([categoryId, expenseDate])
+  @@index([paidTo])
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String   @db.VarChar(80)
+  targetType String?  @db.VarChar(80)
+  targetId   String?  @db.VarChar(191)
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
