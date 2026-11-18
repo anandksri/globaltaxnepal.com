@@ -68,6 +68,24 @@ export function AdminPageTitle() {
     title = "Edit document details";
   } else if (pathname.startsWith("/admin/documents/")) {
     title = "Document details";
+  } else if (pathname === "/admin/tax") {
+    title = "Tax & compliance";
+  } else if (pathname === "/admin/tax/records") {
+    title = "Tax records";
+  } else if (pathname === "/admin/tax/records/new") {
+    title = "Add tax record";
+  } else if (pathname.includes("/tax/records/") && pathname.endsWith("/edit")) {
+    title = "Edit tax record";
+  } else if (pathname.startsWith("/admin/tax/records/")) {
+    title = "Tax record details";
+  } else if (pathname === "/admin/tax/compliance") {
+    title = "Compliance tracking";
+  } else if (pathname === "/admin/tax/compliance/new") {
+    title = "Add compliance task";
+  } else if (pathname.includes("/tax/compliance/") && pathname.endsWith("/edit")) {
+    title = "Edit compliance task";
+  } else if (pathname.startsWith("/admin/tax/compliance/")) {
+    title = "Compliance task details";
   } else if (pathname.endsWith("/edit")) {
     title = "Edit client";
   } else if (/^\/admin\/clients\/[^/]+$/.test(pathname)) {

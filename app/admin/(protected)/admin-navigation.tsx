@@ -63,9 +63,9 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
   {
     title: "Tax Management",
     items: [
-      { label: "PAN / VAT information", icon: FileCheck2 },
-      { label: "Tax records", icon: Files },
-      { label: "Compliance tracking", icon: ClipboardList },
+      { label: "Tax & compliance overview", href: "/admin/tax", icon: FileCheck2 },
+      { label: "Tax records", href: "/admin/tax/records", icon: Files },
+      { label: "Compliance tracking", href: "/admin/tax/compliance", icon: ClipboardList },
     ],
   },
   {

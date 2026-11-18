@@ -62,6 +62,18 @@ enum DocumentCategory {
   OTHER
 }
 
+enum TaxFilingStatus {
+  NOT_FILED
+  IN_PROGRESS
+  FILED
+}
+
+enum ComplianceStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
 model User {
   id           String        @id @default(cuid())
   name         String?       @db.VarChar(100)
@@ -78,6 +90,8 @@ model User {
   createdIncomeRecords IncomeRecord[] @relation("IncomeRecordCreatedBy")
   createdExpenseRecords ExpenseRecord[] @relation("ExpenseRecordCreatedBy")
   uploadedDocuments Document[] @relation("DocumentUploadedBy")
+  assignedComplianceTasks ComplianceTask[] @relation("ComplianceTaskAssignedTo")
+  createdComplianceTasks ComplianceTask[] @relation("ComplianceTaskCreatedBy")
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -117,6 +131,8 @@ model Client {
   receiptVouchers  ReceiptVoucher[]
   incomeRecords    IncomeRecord[]
   documents        Document[]
+  taxRecords       ClientTaxRecord[]
+  complianceTasks  ComplianceTask[]
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -363,6 +379,8 @@ model Document {
   fileSize        Int
   uploadedById    String
   uploadedBy      User             @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
+  taxRecordLinks  TaxRecordDocument[]
+  complianceLinks ComplianceDocument[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -370,6 +388,75 @@ model Document {
   @@index([clientId, createdAt])
   @@index([title])
   @@index([createdAt])
+}
+
+model ClientTaxRecord {
+  id             String          @id @default(cuid())
+  clientId       String
+  client         Client          @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  panNumber      String?         @db.VarChar(20)
+  vatRegistered  Boolean
+  vatNumber      String?         @db.VarChar(30)
+  taxPeriod      String          @db.VarChar(100)
+  taxType        String          @db.VarChar(100)
+  filingStatus   TaxFilingStatus @default(NOT_FILED)
+  filingDate     DateTime?       @db.Date
+  dueDate        DateTime?       @db.Date
+  notes          String?         @db.Text
+  documents      TaxRecordDocument[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([clientId, taxPeriod, taxType])
+  @@index([clientId, dueDate])
+  @@index([filingStatus, dueDate])
+  @@index([taxPeriod, taxType])
+}
+
+model ComplianceTask {
+  id             String          @id @default(cuid())
+  title          String          @db.VarChar(200)
+  clientId       String?
+  client         Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  category       String          @db.VarChar(100)
+  description    String?         @db.VarChar(1000)
+  dueDate        DateTime        @db.Date
+  assignedToId   String?
+  assignedTo     User?           @relation("ComplianceTaskAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  status         ComplianceStatus @default(PENDING)
+  completedAt    DateTime?       @db.Date
+  notes          String?         @db.Text
+  createdById    String
+  createdBy      User            @relation("ComplianceTaskCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  documents      ComplianceDocument[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([status, dueDate])
+  @@index([clientId, dueDate])
+  @@index([assignedToId, dueDate])
+}
+
+model TaxRecordDocument {
+  taxRecordId String
+  documentId  String
+  taxRecord   ClientTaxRecord @relation(fields: [taxRecordId], references: [id], onDelete: Cascade)
+  document    Document        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime        @default(now())
+
+  @@id([taxRecordId, documentId])
+  @@index([documentId])
+}
+
+model ComplianceDocument {
+  taskId     String
+  documentId String
+  task       ComplianceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  document   Document       @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+
+  @@id([taskId, documentId])
+  @@index([documentId])
 }
 
 model ActivityLog {
