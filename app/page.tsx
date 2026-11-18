@@ -31,8 +31,6 @@ export const metadata: Metadata = {
 type Offering = {
   title: string;
   description: string;
-  who: string;
-  support: string;
   icon: LucideIcon;
 };
 
@@ -40,7 +38,6 @@ const serviceGroups: {
   id: string;
   number: string;
   title: string;
-  intro: string;
   icon: LucideIcon;
   offerings: Offering[];
 }[] = [
@@ -48,26 +45,21 @@ const serviceGroups: {
     id: "tax-services",
     number: "01",
     title: "Tax Consultancy",
-    intro:
-      "Tax planning, filing and compliance support for individuals and businesses.",
     icon: FileCheck2,
     offerings: [
       {
         title: "Tax Planning & Filing",
-        description:
-          "Preparation and filing support for individual and corporate tax returns, based on the information and documents provided.",
-        who: "Individuals and businesses preparing tax returns or reviewing tax-related requirements.",
-        support:
-          "Discussing relevant records, organizing return information and supporting the filing process.",
+        description: "Tax return preparation and filing support for individuals and businesses.",
         icon: Calculator,
       },
       {
         title: "Tax Compliance",
-        description:
-          "Support with tax documentation and return-related requirements for individuals and businesses.",
-        who: "Individuals and businesses seeking help organizing tax-related records and requirements.",
-        support:
-          "Reviewing the available paperwork and clarifying the agreed consultancy steps.",
+        description: "Help organizing tax records and understanding related requirements.",
+        icon: FileCheck2,
+      },
+      {
+        title: "Tax Clearance",
+        description: "Guidance with tax clearance documentation and process requirements.",
         icon: FileCheck2,
       },
     ],
@@ -76,62 +68,36 @@ const serviceGroups: {
     id: "business-services",
     number: "02",
     title: "Business Registration & Consultancy",
-    intro:
-      "Guidance with business setup, company registration and related documentation.",
     icon: BriefcaseBusiness,
     offerings: [
       {
         title: "Company Registration",
-        description:
-          "Support with company registration procedures, PAN/VAT registration requirements and related documentation.",
-        who: "Entrepreneurs, founders and organizations preparing to register a company.",
-        support:
-          "Discussing the applicable process and helping prepare and organize relevant information and documents.",
+        description: "Guidance with company registration steps and required paperwork.",
         icon: Building2,
       },
       {
         title: "Business Setup",
-        description:
-          "Support with the administrative and documentation requirements involved in setting up a business.",
-        who: "People planning a business, entrepreneurs and organizations working through setup requirements.",
-        support:
-          "Understanding your requirements and organizing the relevant setup steps and paperwork.",
+        description: "Support organizing the administrative steps for setting up a business.",
         icon: BriefcaseBusiness,
       },
       {
         title: "OCR Services",
-        description:
-          "Assistance with Office of Company Registrar-related processes and documentation.",
-        who: "Businesses and entrepreneurs dealing with OCR-related paperwork.",
-        support:
-          "Help understanding the relevant process and preparing or organizing required documents.",
+        description: "Assistance with Office of Company Registrar processes and documents.",
         icon: Landmark,
       },
       {
         title: "Business Consultancy",
-        description:
-          "Business consulting on structure, growth and the financial considerations involved in running an organization.",
-        who: "Startups, established businesses and people planning a business.",
-        support:
-          "Discussing your goals and requirements, then identifying relevant consultancy support and next steps.",
+        description: "Practical advice on business structure, setup and administration.",
         icon: BriefcaseBusiness,
       },
       {
         title: "PAN Registration",
-        description:
-          "Support with PAN registration requirements and the related application documentation.",
-        who: "Individuals and businesses preparing for PAN registration.",
-        support:
-          "Guidance on relevant requirements and help organizing application information and paperwork.",
+        description: "Help understanding PAN registration requirements and preparing documents.",
         icon: IdCard,
       },
       {
         title: "VAT Registration",
-        description:
-          "Assistance with understanding VAT registration requirements and preparing relevant documentation.",
-        who: "Businesses reviewing or preparing for VAT registration.",
-        support:
-          "Discussing your situation, relevant paperwork and the steps involved in preparing documentation.",
+        description: "Guidance on VAT registration requirements and supporting paperwork.",
         icon: ReceiptText,
       },
     ],
@@ -140,27 +106,22 @@ const serviceGroups: {
     id: "accounting-services",
     number: "03",
     title: "Accounting & Financial Support",
-    intro:
-      "Financial review and reporting support to help keep business records organized.",
     icon: WalletCards,
     offerings: [
       {
         title: "Financial Review & Compliance",
-        description:
-          "Review of financial statements and reporting support to help maintain accurate, organized records.",
-        who: "Businesses looking to review financial statements and organize financial reporting.",
-        support:
-          "Reviewing available financial information and discussing documentation and reporting requirements.",
+        description: "Financial statement review and reporting documentation support.",
         icon: ClipboardCheck,
       },
       {
         title: "Audit & Assurance",
-        description:
-          "Financial audit and reporting support to help make records and relevant information easier to review.",
-        who: "Businesses preparing financial records and documents for audit-related work.",
-        support:
-          "Organizing relevant financial information and supporting documentation for the agreed review.",
+        description: "Help organizing financial records for audit-related review.",
         icon: Files,
+      },
+      {
+        title: "Accounting & Bookkeeping",
+        description: "Organized accounting records and day-to-day bookkeeping support.",
+        icon: Calculator,
       },
     ],
   },
@@ -168,35 +129,21 @@ const serviceGroups: {
     id: "documentation-services",
     number: "04",
     title: "Documentation & Client Management",
-    intro:
-      "Organized access to essential business documents and clearer records of fees and due dates.",
     icon: Files,
     offerings: [
       {
         title: "Document Management",
-        description:
-          "Folder-based organization of important documents such as PAN, tax clearance and audit records.",
-        who: "Individuals and businesses who need help organizing important business and tax documents.",
-        support:
-          "Support arranging documents into a clear structure for easier reference and management.",
+        description: "Organize important PAN, tax clearance and audit documents.",
         icon: Files,
       },
       {
         title: "Document Vault",
-        description:
-          "Support for organizing essential business and tax paperwork so it is easier to find and manage.",
-        who: "Clients managing important records such as registration, tax and audit documents.",
-        support:
-          "We discuss how to organize and maintain relevant records as part of the agreed consultancy work.",
+        description: "Keep essential business and tax paperwork organized for reference.",
         icon: FileCheck2,
       },
       {
         title: "Fee & Due Management",
-        description:
-          "Support for keeping agreed fees, due dates and related payment records organized.",
-        who: "Clients and businesses who want clearer records of fees and due dates.",
-        support:
-          "Organizing fee and due information and related receipts as part of the agreed client support.",
+        description: "Organize agreed fees, due dates and related payment records.",
         icon: WalletCards,
       },
     ],
@@ -207,58 +154,27 @@ const processSteps = [
   {
     number: "01",
     title: "Initial Enquiry",
-    description:
-      "Get in touch and tell us what kind of tax or business support you are looking for.",
+    description: "Share what support you need.",
   },
   {
     number: "02",
     title: "Understand Requirements",
-    description:
-      "We discuss your situation, expectations and the service requirements relevant to your enquiry.",
+    description: "Clarify the work and required details.",
   },
   {
     number: "03",
     title: "Document Collection",
-    description:
-      "We identify and organize the information and documents needed for the agreed work.",
+    description: "Gather and organize relevant documents.",
   },
   {
     number: "04",
     title: "Consultancy & Processing",
-    description:
-      "The consultancy work proceeds according to the agreed requirements, with communication as needed.",
+    description: "Proceed with the agreed consultancy work.",
   },
   {
     number: "05",
     title: "Completion & Handover",
-    description:
-      "We share the completed work and explain any relevant follow-up steps or records to keep.",
-  },
-];
-
-const values = [
-  "Professionalism",
-  "Transparency",
-  "Accountability",
-  "Client-focused service",
-  "Organized documentation",
-];
-
-const commitments = [
-  {
-    title: "Data Security First",
-    description:
-      "We recognize that financial and business documents are sensitive and treat their handling with care.",
-  },
-  {
-    title: "Absolute Transparency",
-    description:
-      "We aim to communicate the agreed work, documentation needs and next steps clearly.",
-  },
-  {
-    title: "Expert Support",
-    description:
-      "We provide professional guidance across the tax and business requirements we support.",
+    description: "Receive completed work and next steps.",
   },
 ];
 
@@ -318,36 +234,18 @@ function ServiceOffering({ offering }: { offering: Offering }) {
   const Icon = offering.icon;
 
   return (
-    <article className="service-offering grid gap-x-6 gap-y-3 border-t border-border py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:py-6">
+    <article className="service-offering grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1 border-t border-border py-4 sm:grid-cols-[1.25rem_minmax(0,1fr)_auto] sm:gap-4">
+      <Icon aria-hidden="true" className="icon mt-0.5 text-secondary" />
       <div>
-        <div className="flex items-start gap-3">
-          <Icon aria-hidden="true" className="icon mt-1 text-secondary" />
-          <div>
-            <h4 className="text-base font-semibold leading-snug text-primary">
-              {offering.title}
-            </h4>
-            <p className="mt-2 text-sm leading-6 text-text-secondary">
-              {offering.description}
-            </p>
-          </div>
-        </div>
-        <dl className="mt-4 grid gap-3 pl-8 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary">
-              Who may need this
-            </dt>
-            <dd className="mt-1 leading-6 text-text">{offering.who}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-[0.08em] text-text-secondary">
-              Support provided
-            </dt>
-            <dd className="mt-1 leading-6 text-text">{offering.support}</dd>
-          </div>
-        </dl>
+        <h4 className="text-base font-semibold leading-snug text-primary">
+          {offering.title}
+        </h4>
+        <p className="mt-1 text-sm leading-5 text-text-secondary">
+          {offering.description}
+        </p>
       </div>
       <a
-        className="group inline-flex w-fit items-center gap-2 self-end text-sm font-semibold text-secondary transition-colors duration-200 ease-out hover:text-primary sm:mb-1"
+        className="group col-start-2 inline-flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-secondary transition-colors duration-200 ease-out hover:text-primary sm:col-start-3 sm:self-center"
         href="#contact"
       >
         Enquire
@@ -377,16 +275,6 @@ function ServiceGroup({
       }`}
       id={group.id}
     >
-      {index === 0 && (
-        <Image
-          alt=""
-          aria-hidden="true"
-          className="devotional-watermark devotional-watermark-ganesh"
-          height={667}
-          src="/assets/shri-ganesh-ji.jpg"
-          width={500}
-        />
-      )}
       <div className="site-container relative z-10 grid gap-6 lg:grid-cols-[0.68fr_1.32fr] lg:gap-16">
         <div>
           <p className="text-xs font-medium tracking-[0.14em] text-secondary">
@@ -401,9 +289,18 @@ function ServiceGroup({
               {group.title}
             </h3>
           </div>
-          <p className="mt-3 max-w-md text-sm leading-6 text-text-secondary">
-            {group.intro}
-          </p>
+          {index === 0 && (
+            <div className="relative mt-3 h-28 sm:h-36 lg:mt-5 lg:h-[16rem]">
+              <Image
+                alt=""
+                aria-hidden="true"
+                className="devotional-watermark devotional-watermark-ganesh"
+                height={667}
+                src="/assets/shri-ganesh-ji.jpg"
+                width={500}
+              />
+            </div>
+          )}
         </div>
         <div>
           {group.offerings.map((offering) => (
@@ -418,9 +315,6 @@ function ServiceGroup({
                 sizes="(max-width: 1023px) 100vw, 55vw"
                 src="/assets/organized-business-records.jpg"
               />
-              <figcaption className="absolute bottom-0 left-0 bg-surface px-4 py-3 text-xs font-medium text-primary">
-                Keeping important records in order
-              </figcaption>
             </figure>
           )}
         </div>
@@ -450,8 +344,7 @@ export default function HomePage() {
             <div className="relative z-10 max-w-2xl lg:py-6">
               <p className="mb-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.17em] text-secondary">
                 <span aria-hidden="true" className="h-px w-8 bg-highlight" />
-                Empowering Your Financial Success, Together. With Tax
-                Excellence.
+                Tax &amp; Business Consultancy
               </p>
               <h1
                 className="max-w-[17ch] text-display font-semibold leading-[1.06] tracking-[-0.045em] text-primary"
@@ -460,10 +353,8 @@ export default function HomePage() {
                 Building Trust. Protecting Business. Enabling Growth.
               </h1>
               <p className="mt-6 max-w-xl text-base leading-7 text-text-secondary sm:text-lg sm:leading-8">
-                Your trusted partner for tax consultancy, business registration,
-                accounting and professional business support. We simplify
-                complex requirements so individuals and businesses can focus on
-                what matters most.
+                Professional tax, registration and accounting support for
+                individuals and businesses.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a className="button button-primary" href="#contact">
@@ -472,28 +363,6 @@ export default function HomePage() {
                 </a>
                 <a className="button button-secondary" href="#services">
                   Explore Services
-                </a>
-              </div>
-              <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-5">
-                <a
-                  className="group inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors duration-200 ease-out hover:text-secondary"
-                  href="#tax-services"
-                >
-                  Tax Consultancy
-                  <ArrowUpRight
-                    aria-hidden="true"
-                    className="icon text-secondary transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  />
-                </a>
-                <a
-                  className="group inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors duration-200 ease-out hover:text-secondary"
-                  href="#business-services"
-                >
-                  Business Consultancy
-                  <ArrowUpRight
-                    aria-hidden="true"
-                    className="icon text-secondary transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  />
                 </a>
               </div>
             </div>
@@ -544,68 +413,35 @@ export default function HomePage() {
 
         <section
           aria-labelledby="overview-title"
-          className="scroll-target border-b border-border bg-surface py-10 sm:py-12"
+          className="scroll-target border-b border-border bg-surface py-7 sm:py-9"
           id="overview"
         >
-          <div className="site-container grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-16">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
-              Our perspective
-            </p>
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end sm:gap-8">
-              <h2
-                className="max-w-3xl text-xl font-medium leading-snug tracking-[-0.02em] text-primary sm:text-2xl"
-                id="overview-title"
-              >
-                Professional document management and financial consulting
+          <div className="site-container">
+            <h2
+              className="max-w-4xl text-lg font-medium leading-snug tracking-[-0.02em] text-primary sm:text-xl"
+              id="overview-title"
+            >
+              Empowering Your Financial Success, Together. With Tax Excellence.
+              <span className="mt-1 block text-sm font-normal leading-6 text-text-secondary sm:text-base">
+                Professional document management and financial consulting,
                 reimagined for the modern era.
-              </h2>
-              <a
-                className="group inline-flex w-fit items-center gap-2 text-sm font-semibold text-secondary transition-colors duration-200 ease-out hover:text-primary"
-                href="#about"
-              >
-                Get to know us
-                <ArrowRight
-                  aria-hidden="true"
-                  className="icon transition-transform duration-200 ease-out group-hover:translate-x-1"
-                />
-              </a>
-            </div>
-            <p className="text-sm leading-6 text-text-secondary lg:col-start-2">
-              Global Tax Nepal supports people and businesses with tax
-              consultancy, company setup, financial review and organized
-              documentation—helping make compliance a more manageable part of
-              business growth.
-            </p>
+              </span>
+            </h2>
           </div>
         </section>
 
         <section
           aria-labelledby="about-title"
-          className="about-section scroll-target relative isolate overflow-hidden bg-background py-16 sm:py-20 lg:py-24"
+          className="about-section scroll-target relative isolate overflow-hidden bg-background py-12 sm:py-16 lg:py-20"
           id="about"
         >
-          <Image
-            alt=""
-            aria-hidden="true"
-            className="devotional-watermark devotional-watermark-khatu"
-            height={260}
-            src="/assets/khatu-shyam-ji.jpg"
-            width={195}
-          />
           <div className="site-container relative z-10">
-            <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-end lg:gap-16">
+            <div className="max-w-3xl">
               <SectionHeading
                 id="about-title"
                 eyebrow="About Global Tax Nepal"
-                title="Your Partner in Tax, Compliance and Business Growth."
+                title="Your tax and business consultancy partner."
               />
-              <p className="max-w-2xl text-base leading-7 text-text-secondary sm:text-lg sm:leading-8">
-                We support individuals, entrepreneurs, startups and established
-                businesses as they navigate tax and business requirements.
-                Through organized consultancy support, we help make the work
-                behind registration, accounting and compliance easier to
-                understand.
-              </p>
             </div>
 
             <div className="mt-10 grid gap-8 lg:mt-14 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
@@ -628,10 +464,8 @@ export default function HomePage() {
                     Who we are
                   </h3>
                   <p className="max-w-xl text-sm leading-6 text-text-secondary sm:text-base sm:leading-7">
-                    Global Tax Nepal is a tax and business consultancy
-                    supporting individuals, entrepreneurs, startups and
-                    established businesses with their tax and business
-                    requirements.
+                    We support individuals, entrepreneurs and established
+                    businesses with tax and business requirements.
                   </p>
                 </article>
                 <article className="grid gap-2 py-5 sm:grid-cols-[8rem_1fr] sm:gap-5 sm:py-6">
@@ -639,8 +473,8 @@ export default function HomePage() {
                     What we do
                   </h3>
                   <p className="max-w-xl text-sm leading-6 text-text-secondary sm:text-base sm:leading-7">
-                    We support registrations, taxation, accounting,
-                    financial review, documentation and business consultancy.
+                    Registration, tax, accounting, financial review and
+                    documentation support.
                   </p>
                 </article>
                 <article className="grid gap-2 py-5 sm:grid-cols-[8rem_1fr] sm:gap-5 sm:py-6">
@@ -648,9 +482,7 @@ export default function HomePage() {
                     Our mission
                   </h3>
                   <p className="max-w-xl text-sm leading-6 text-text-secondary sm:text-base sm:leading-7">
-                    To bridge the gap between complex tax requirements and
-                    business owners, making financial compliance a more
-                    understandable part of business growth.
+                    Make tax compliance easier to understand and manage.
                   </p>
                 </article>
                 <article className="grid gap-2 py-5 sm:grid-cols-[8rem_1fr] sm:gap-5 sm:py-6">
@@ -658,99 +490,42 @@ export default function HomePage() {
                     Our vision
                   </h3>
                   <p className="max-w-xl text-sm leading-6 text-text-secondary sm:text-base sm:leading-7">
-                    To build lasting relationships through reliable, organized
-                    and professional consultancy support.
+                    Build lasting relationships through reliable consultancy.
                   </p>
                 </article>
               </div>
             </div>
 
-            <div className="mt-10 grid gap-8 border-t border-border pt-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-start lg:gap-16">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
-                  Our values
-                </p>
-                <h3 className="mt-3 text-lg font-semibold text-primary">
-                  How we approach our work.
-                </h3>
-              </div>
-              <ul className="flex flex-wrap gap-x-7 gap-y-3">
-                {values.map((value) => (
-                  <li
-                    className="flex items-center gap-2 text-sm font-medium text-text"
-                    key={value}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="size-1.5 rounded-full bg-highlight"
-                    />
-                    {value}
-                  </li>
-                ))}
-              </ul>
+            <div className="mt-8 border-t border-border pt-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary">
+                Professionalism · Transparency · Accountability · Client focus ·
+                Organized records · Careful data handling · Expert support
+              </p>
             </div>
 
-            <div className="mt-10 grid gap-8 border-t border-border pt-8 lg:grid-cols-[0.7fr_1.3fr] lg:gap-16">
+            <figure className="mt-7 grid grid-cols-[minmax(0,1fr)_7rem] items-center gap-4 border-y border-border py-5 sm:grid-cols-[minmax(0,1fr)_10rem] sm:py-6 lg:ml-[35%] lg:grid-cols-[minmax(0,1fr)_14rem] lg:pl-8">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
-                  Our commitments
-                </p>
-                <h3 className="mt-3 text-lg font-semibold text-primary">
-                  Principles behind our support.
-                </h3>
+                <blockquote className="max-w-3xl text-lg font-medium leading-relaxed tracking-[-0.02em] text-primary sm:text-xl">
+                  “Our goal is to make tax compliance the easiest part of
+                  running your business.”
+                </blockquote>
+                <figcaption className="mt-3 text-sm font-semibold text-text-secondary">
+                  Gajendra Kumar Sony{" "}
+                  <span className="font-normal">— Founder</span>
+                </figcaption>
               </div>
-              <div className="divide-y divide-border border-y border-border">
-                {commitments.map((commitment) => (
-                  <article
-                    className="grid gap-2 py-4 sm:grid-cols-[10rem_1fr] sm:gap-5"
-                    key={commitment.title}
-                  >
-                    <h4 className="text-sm font-semibold text-primary">
-                      {commitment.title}
-                    </h4>
-                    <p className="text-sm leading-6 text-text-secondary">
-                      {commitment.description}
-                    </p>
-                  </article>
-                ))}
+              <div className="khatu-watermark-slot relative h-28 sm:h-36 lg:h-48">
+                <Image
+                  alt=""
+                  aria-hidden="true"
+                  className="devotional-watermark devotional-watermark-khatu"
+                  height={260}
+                  src="/assets/khatu-shyam-ji.jpg"
+                  width={195}
+                />
               </div>
-            </div>
-
-            <figure className="mt-10 border-y border-border py-7 sm:py-9 lg:ml-[calc(58.333%-2rem)] lg:pl-8">
-              <blockquote className="max-w-3xl text-xl font-medium leading-relaxed tracking-[-0.02em] text-primary sm:text-2xl">
-                “Our goal is to make tax compliance the easiest part of running
-                your business.”
-              </blockquote>
-              <figcaption className="mt-4 text-sm font-semibold text-text-secondary">
-                Gajendra Kumar Sony <span className="font-normal">— Founder</span>
-              </figcaption>
             </figure>
 
-            <div className="mt-12 grid gap-8 border-t border-border pt-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-16">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">
-                  Why professional consultancy
-                </p>
-                <h3 className="mt-3 max-w-lg text-xl font-semibold leading-tight tracking-[-0.025em] text-primary sm:text-2xl">
-                  Business requirements are easier to manage when the details
-                  are in order.
-                </h3>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <p className="border-t border-border pt-4 text-sm leading-6 text-text-secondary">
-                  Proper documentation helps keep essential records organized
-                  and available when they are needed.
-                </p>
-                <p className="border-t border-border pt-4 text-sm leading-6 text-text-secondary">
-                  Understanding relevant compliance requirements helps people
-                  plan their next steps with more clarity.
-                </p>
-                <p className="border-t border-border pt-4 text-sm leading-6 text-text-secondary">
-                  Organized business processes make it easier to follow
-                  responsibilities and manage routine work.
-                </p>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -764,26 +539,17 @@ export default function HomePage() {
               <SectionHeading
                 id="services-title"
                 eyebrow="Our services"
-                title="Practical support across your business requirements."
+                title="Services for tax, business and records."
               />
-              <p className="max-w-lg pb-1 text-sm leading-6 text-text-secondary sm:text-base">
-                Explore the company’s published tax, business, financial review
-                and documentation support. Each enquiry begins with
-                understanding your specific requirements.
-              </p>
             </div>
           </div>
           {serviceGroups.map((group, index) => (
             <ServiceGroup group={group} index={index} key={group.id} />
           ))}
           <div className="border-t border-border bg-primary py-6 text-white">
-            <div className="site-container flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-2xl text-sm leading-6 text-white/85">
-                The support required can depend on your circumstances. We can
-                discuss the relevant requirements during an initial enquiry.
-              </p>
+            <div className="site-container flex justify-end">
               <a className="button button-light w-fit" href="#contact">
-                Discuss your requirements
+                Ask about a service
                 <ArrowRight aria-hidden="true" className="icon" />
               </a>
             </div>
@@ -792,30 +558,18 @@ export default function HomePage() {
 
         <section
           aria-labelledby="process-title"
-          className="process-section scroll-target relative isolate overflow-hidden border-y border-border bg-background py-16 sm:py-20 lg:py-24"
+          className="process-section scroll-target relative isolate overflow-hidden border-y border-border bg-background py-12 sm:py-16 lg:py-20"
           id="process"
         >
-          <Image
-            alt=""
-            aria-hidden="true"
-            className="devotional-watermark devotional-watermark-khatu"
-            height={260}
-            src="/assets/khatu-shyam-ji.jpg"
-            width={195}
-          />
           <div className="site-container relative z-10">
-            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end lg:gap-16">
+            <div>
               <SectionHeading
                 id="process-title"
                 eyebrow="Our process"
-                title="Simple Steps. Organized Support. Clear Outcomes."
+                title="A clear five-step process."
               />
-              <p className="max-w-xl pb-1 text-sm leading-6 text-text-secondary sm:text-base">
-                Each engagement starts with a conversation and moves forward
-                through clear, agreed stages.
-              </p>
             </div>
-            <ol className="process-timeline mt-10 grid gap-y-2 sm:grid-cols-2 sm:gap-x-8 lg:mt-14 lg:grid-cols-5 lg:gap-x-5">
+            <ol className="process-timeline mt-8 grid gap-y-2 sm:grid-cols-2 sm:gap-x-8 lg:mt-10 lg:grid-cols-5 lg:gap-x-5">
               {processSteps.map((step) => (
                 <li className="process-step relative" key={step.number}>
                   <span className="process-marker" aria-hidden="true">
@@ -837,7 +591,7 @@ export default function HomePage() {
 
         <section
           aria-labelledby="contact-title"
-          className="contact-section scroll-target bg-white py-16 sm:py-20 lg:py-24"
+          className="contact-section scroll-target bg-white py-12 sm:py-16 lg:py-20"
           id="contact"
         >
           <div className="site-container">
@@ -846,8 +600,7 @@ export default function HomePage() {
                 <SectionHeading
                   id="contact-title"
                   eyebrow="Contact"
-                  title="Let’s Discuss Your Business Requirements."
-                  description="Tell us what you need help with. We’ll use your enquiry to understand your requirements and discuss the relevant next steps."
+                  title="Contact Global Tax Nepal."
                 />
                 <div className="mt-8 divide-y divide-border border-y border-border">
                   <div className="flex gap-4 py-4">

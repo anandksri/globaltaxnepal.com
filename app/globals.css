@@ -209,20 +209,21 @@ button,
   pointer-events: none;
   height: auto;
   object-fit: contain;
-  opacity: 0.05;
-  filter: grayscale(1);
+  opacity: 0.06;
 }
 
 .devotional-watermark-khatu {
-  right: max(calc((100vw - var(--content-width)) / 2), 1rem);
-  bottom: 1.5rem;
-  width: clamp(7rem, 11vw, 9rem);
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .devotional-watermark-ganesh {
-  right: max(calc((100vw - var(--content-width)) / 2), 1rem);
-  bottom: 1rem;
-  width: clamp(7rem, 12vw, 10rem);
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
 }
 
 .process-timeline {
@@ -263,6 +264,12 @@ button,
 @media (min-width: 40rem) {
   .site-container {
     width: min(calc(100% - 3rem), var(--content-width));
+  }
+}
+
+@media (max-width: 39.999rem) {
+  .devotional-watermark {
+    opacity: 0.06;
   }
 }
 
