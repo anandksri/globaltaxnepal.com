@@ -4,11 +4,8 @@ import {
   Activity,
   BookOpenCheck,
   Building2,
-  ChartNoAxesCombined,
   CircleDollarSign,
   CircleUserRound,
-  ClipboardList,
-  FileCheck2,
   Files,
   LayoutDashboard,
   ReceiptText,
@@ -51,32 +48,6 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
       { label: "Details Bill", href: "/admin/details-bills", icon: BookOpenCheck },
       { label: "Receipt Voucher", href: "/admin/receipt-vouchers", icon: CircleDollarSign },
       { label: "Payment Voucher", href: "/admin/payment-vouchers", icon: Wallet },
-    ],
-  },
-  {
-    title: "Accounts",
-    items: [
-      { label: "Accounts overview", href: "/admin/accounts", icon: ChartNoAxesCombined },
-      { label: "Income", href: "/admin/accounts/income", icon: CircleDollarSign },
-      { label: "Expenses", href: "/admin/accounts/expenses", icon: Wallet },
-    ],
-  },
-  {
-    title: "Tax Management",
-    items: [
-      { label: "Tax & compliance overview", href: "/admin/tax", icon: FileCheck2 },
-      { label: "Tax records", href: "/admin/tax/records", icon: Files },
-      { label: "Compliance tracking", href: "/admin/tax/compliance", icon: ClipboardList },
-    ],
-  },
-  {
-    title: "Reports",
-    items: [
-      { label: "Reports overview", href: "/admin/reports", icon: ChartNoAxesCombined },
-      { label: "Billing reports", href: "/admin/reports/billing", icon: ReceiptText },
-      { label: "Client reports", href: "/admin/reports/clients", icon: Users },
-      { label: "Income and expense reports", href: "/admin/reports/financial", icon: CircleDollarSign },
-      { label: "Tax & compliance reports", href: "/admin/reports/tax", icon: FileCheck2 },
     ],
   },
   {
