@@ -5,11 +5,13 @@ import { z } from "zod";
 import { updateDocument } from "../../actions";
 import { DocumentMetadataForm } from "../../document-forms";
 import { documentCategories, getDocumentEditData } from "@/lib/admin/documents";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Edit document details" };
 export const dynamic = "force-dynamic";
 
 export default async function EditDocumentPage({ params }: { params: Promise<{ id: string }> }) {
+  await requirePermission("DOCUMENTS", "EDIT");
   const { id } = await params;
   const parsed = z.string().min(1).max(191).safeParse(id);
   if (!parsed.success) notFound();

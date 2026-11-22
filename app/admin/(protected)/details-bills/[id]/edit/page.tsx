@@ -6,6 +6,7 @@ import { z } from "zod";
 import { BillForm } from "@/app/admin/(protected)/billing/bill-form";
 import { updateDetailsBill } from "../../actions";
 import { getDetailsBillForEdit } from "@/lib/admin/details-bills";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Edit details bill" };
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export default async function EditDetailsBillPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("BILLING", "EDIT");
   const { id } = await params;
   const validId = z.string().min(1).max(191).safeParse(id);
   if (!validId.success) notFound();

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { BillingActionState } from "@/app/admin/(protected)/billing/actions";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
 
 function validDate(value: string) {
@@ -71,7 +71,14 @@ async function nextVoucherNumber(
     update: { currentValue: { increment: 1 } },
     select: { currentValue: true },
   });
-  const prefix = type === VoucherType.RECEIPT ? "RV" : "PV";
+  const settings = await transaction.companySettings.findUnique({
+    where: { id: "company" },
+    select: { receiptVoucherPrefix: true, paymentVoucherPrefix: true },
+  });
+  const configuredPrefix = type === VoucherType.RECEIPT
+    ? settings?.receiptVoucherPrefix
+    : settings?.paymentVoucherPrefix;
+  const prefix = configuredPrefix?.trim() || (type === VoucherType.RECEIPT ? "RV" : "PV");
   return `${prefix}-${year}-${sequence.currentValue.toString().padStart(6, "0")}`;
 }
 
@@ -92,7 +99,7 @@ export async function createReceiptVoucher(
   _state: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("VOUCHERS", "CREATE");
   const parsed = receiptSchema.safeParse({
     ...readForm(formData),
     clientId: formData.get("clientId"),
@@ -156,7 +163,7 @@ export async function updateReceiptVoucher(
   _state: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("VOUCHERS", "EDIT");
   const id = z.string().min(1).max(191).safeParse(voucherId);
   const parsed = receiptSchema.safeParse({
     ...readForm(formData),
@@ -226,6 +233,7 @@ export async function updateReceiptVoucher(
             clientId: client.id,
             clientName: client.displayName,
             reference: parsed.data.reference || null,
+            description: parsed.data.description,
           },
         });
       }
@@ -260,7 +268,7 @@ export async function createPaymentVoucher(
   _state: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("VOUCHERS", "CREATE");
   const parsed = paymentSchema.safeParse({
     ...readForm(formData),
     payeeName: formData.get("payeeName"),
@@ -317,7 +325,7 @@ export async function updatePaymentVoucher(
   _state: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("VOUCHERS", "EDIT");
   const id = z.string().min(1).max(191).safeParse(voucherId);
   const parsed = paymentSchema.safeParse({
     ...readForm(formData),
@@ -355,6 +363,7 @@ export async function updatePaymentVoucher(
             method: parsed.data.method,
             paidTo: parsed.data.payeeName,
             reference: parsed.data.reference || null,
+            description: parsed.data.purpose,
           },
         });
       }

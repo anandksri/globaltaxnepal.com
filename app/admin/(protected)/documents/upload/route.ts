@@ -1,7 +1,7 @@
 import { DocumentCategory, Prisma } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { getCurrentAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 import { maxDocumentSize, storeDocument, validateDocumentBytes, removeStoredDocument } from "@/lib/admin/document-storage";
 import { prisma } from "@/lib/prisma";
 
@@ -20,8 +20,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "The upload request origin could not be verified." }, { status: 403 });
   }
 
-  const admin = await getCurrentAdmin();
-  if (!admin) return NextResponse.json({ error: "Administrator authentication is required." }, { status: 401 });
+  const admin = await requirePermission("DOCUMENTS", "CREATE");
 
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (Number.isFinite(contentLength) && contentLength > maxDocumentSize + 256 * 1024) {

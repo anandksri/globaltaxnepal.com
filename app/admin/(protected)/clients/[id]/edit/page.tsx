@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { updateClient } from "../../actions";
 import { ClientForm, type ClientFormValues } from "../../client-form";
 import { clientIdSchema } from "@/lib/admin/clients";
+import { requirePermission } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = { title: "Edit client" };
@@ -14,6 +15,7 @@ export default async function EditClientPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("CLIENTS", "EDIT");
   const { id } = await params;
   const parsedId = clientIdSchema.safeParse(id);
   if (!parsedId.success) notFound();

@@ -3,8 +3,9 @@ import path from "node:path";
 import { BillStatus } from "@prisma/client";
 import PDFDocument from "pdfkit";
 import SVGtoPDF from "svg-to-pdfkit";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 import { amountInWords, formatCurrency, moneyToCents } from "@/lib/admin/billing";
+import { getDocumentPath } from "@/lib/admin/document-storage";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -19,7 +20,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await requireAdmin();
+  await requirePermission("BILLING", "VIEW");
   const { id } = await params;
   const parsedId = z.string().min(1).max(191).safeParse(id);
   if (!parsedId.success) return new Response("Not found", { status: 404 });
@@ -40,12 +41,16 @@ export async function GET(
   ]);
   if (!bill) return new Response("Not found", { status: 404 });
 
-  let logo: string;
+  let logo: string | Buffer;
   try {
-    logo = await readFile(
-      path.join(process.cwd(), "public", "assets", "global-tax-nepal-logo.svg"),
-      "utf8",
-    );
+    if (company?.logoStorageKey) {
+      logo = await readFile(await getDocumentPath(company.logoStorageKey));
+    } else {
+      logo = await readFile(
+        path.join(process.cwd(), "public", "assets", "global-tax-nepal-logo.svg"),
+        "utf8",
+      );
+    }
   } catch (error) {
     console.error("[admin-billing] Invoice logo could not be loaded.", {
       name: error instanceof Error ? error.name : "UnknownError",
@@ -69,15 +74,26 @@ export async function GET(
   const vatStatus = bill.status === BillStatus.CANCELLED ? "CANCELLED" : bill.status.replaceAll("_", " ");
 
   document.fillColor("#172B4D").font("Helvetica-Bold").fontSize(18).text(company?.name || "Global Tax Nepal", left, 48, { width: 300 });
-  document.fillColor("#526174").font("Helvetica").fontSize(9);
-  let companyY = 76;
-  for (const line of [company?.address, company?.phone, company?.email, company?.website]) {
+  document.fillColor("#526174").font("Helvetica").fontSize(8);
+  let companyY = 75;
+  for (const line of [
+    company?.address,
+    company?.phone,
+    company?.email,
+    company?.website,
+    company?.panNumber ? `PAN: ${company.panNumber}` : null,
+    company?.vatNumber ? `VAT: ${company.vatNumber}` : null,
+  ]) {
     if (line) {
       document.text(line, left, companyY, { width: 280 });
-      companyY += 13;
+      companyY += 11;
     }
   }
-  SVGtoPDF(document, logo, 355, 45, { width: 190, height: 33 });
+  if (typeof logo === "string") {
+    SVGtoPDF(document, logo, 355, 45, { width: 190, height: 33 });
+  } else {
+    document.image(logo, 355, 45, { fit: [190, 33], align: "right", valign: "center" });
+  }
   document.fillColor("#167D78").font("Helvetica-Bold").fontSize(18).text("INVOICE", 355, 83, { width: 190, align: "right" });
   document.fillColor("#172B4D").font("Helvetica-Bold").fontSize(11).text(bill.billNumber, 355, 106, { width: 190, align: "right" });
   document.fillColor("#526174").font("Helvetica").fontSize(9).text(vatStatus, 355, 122, { width: 190, align: "right" });
@@ -166,6 +182,18 @@ export async function GET(
     document.fillColor("#526174").font("Helvetica-Bold").fontSize(8).text("PAYMENT INSTRUCTIONS", left, y);
     y += 13;
     document.fillColor("#263445").font("Helvetica").fontSize(9).text(company.paymentInstructions, left, y, { width: right - left });
+    y += document.heightOfString(company.paymentInstructions, { width: right - left }) + 18;
+  }
+  const bankDetails = [
+    company?.bankName,
+    company?.bankAccountName,
+    company?.bankAccountNumber,
+    company?.bankBranch,
+  ].filter(Boolean).join(" · ");
+  if (bankDetails) {
+    document.fillColor("#526174").font("Helvetica-Bold").fontSize(8).text("BANK DETAILS", left, y);
+    y += 13;
+    document.fillColor("#263445").font("Helvetica").fontSize(9).text(bankDetails, left, y, { width: right - left });
   }
   document.moveTo(368, 770).lineTo(right, 770).strokeColor("#263445").stroke();
   document.fillColor("#526174").font("Helvetica").fontSize(8).text("Authorized signature", 368, 777, { width: right - 368, align: "center" });

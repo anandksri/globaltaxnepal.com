@@ -40,11 +40,11 @@ if (!setup.success) {
 
     await prisma.$transaction(async (transaction) => {
       const role = await transaction.role.upsert({
-        where: { name: "ADMIN" },
+        where: { name: "SUPER_ADMIN" },
         update: {},
         create: {
-          name: "ADMIN",
-          description: "Authorized administrator",
+          name: "SUPER_ADMIN",
+          description: "Full access to all modules and role permissions.",
         },
       });
 

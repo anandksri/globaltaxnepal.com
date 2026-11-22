@@ -3,7 +3,7 @@
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 import { clientIdSchema, getClientFormData } from "@/lib/admin/clients";
 import { prisma } from "@/lib/prisma";
 
@@ -52,7 +52,7 @@ export async function createClient(
   _previousState: ClientActionState,
   formData: FormData,
 ): Promise<ClientActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("CLIENTS", "CREATE");
   const parsed = getClientFormData(formData);
 
   if (!parsed.success) {
@@ -110,7 +110,7 @@ export async function updateClient(
   _previousState: ClientActionState,
   formData: FormData,
 ): Promise<ClientActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("CLIENTS", "EDIT");
   const validId = clientIdSchema.safeParse(clientId);
 
   if (!validId.success) {
@@ -199,7 +199,7 @@ export async function deactivateClient(
   _previousState: { error?: string },
   _formData: FormData,
 ): Promise<{ error?: string }> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("CLIENTS", "DELETE");
   const validId = clientIdSchema.safeParse(clientId);
 
   if (!validId.success) {

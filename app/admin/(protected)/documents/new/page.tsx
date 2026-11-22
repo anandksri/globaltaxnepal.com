@@ -3,11 +3,13 @@ import Link from "next/link";
 import { DocumentUploadForm } from "../document-forms";
 import { documentCategories } from "@/lib/admin/documents";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Upload document" };
 export const dynamic = "force-dynamic";
 
 export default async function NewDocumentPage() {
+  await requirePermission("DOCUMENTS", "CREATE");
   const clients = await prisma.client.findMany({
     where: { isActive: true },
     orderBy: { displayName: "asc" },

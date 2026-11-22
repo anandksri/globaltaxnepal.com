@@ -102,7 +102,9 @@ export default async function BillDetailsPage({
             </div>
           </div>
           <div className="text-right">
-            <Image alt="Global Tax Nepal" className="ml-auto h-auto w-52" height={68} priority src="/assets/global-tax-nepal-logo.svg" width={390} />
+            <Image alt={company?.name || "Global Tax Nepal"} className="ml-auto h-auto w-52" height={68} priority src={company?.logoStorageKey ? "/admin/settings/logo" : "/assets/global-tax-nepal-logo.svg"} unoptimized={Boolean(company?.logoStorageKey)} width={390} />
+            {company?.panNumber && <p className="mt-1 text-xs text-text-secondary">PAN: {company.panNumber}</p>}
+            {company?.vatNumber && <p className="text-xs text-text-secondary">VAT: {company.vatNumber}</p>}
             <h2 className="mt-5 text-2xl font-semibold uppercase tracking-wide text-primary">Invoice</h2>
             <p className="mt-1 font-medium text-text">{bill.billNumber}</p>
             <p className="text-sm text-text-secondary">{statusNames[displayStatus] ?? displayStatus}</p>
@@ -171,6 +173,12 @@ export default async function BillDetailsPage({
           <div className="mt-5">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Payment instructions</h3>
             <p className="mt-1 whitespace-pre-wrap text-sm">{company.paymentInstructions}</p>
+          </div>
+        )}
+        {(company?.bankName || company?.bankAccountName || company?.bankAccountNumber || company?.bankBranch) && (
+          <div className="mt-5">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Bank details</h3>
+            <p className="mt-1 whitespace-pre-wrap text-sm">{[company.bankName, company.bankAccountName, company.bankAccountNumber, company.bankBranch].filter(Boolean).join(" · ")}</p>
           </div>
         )}
         <div className="mt-16 flex justify-end">

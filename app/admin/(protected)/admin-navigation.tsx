@@ -6,6 +6,7 @@ import {
   Building2,
   ChartNoAxesCombined,
   CircleDollarSign,
+  CircleUserRound,
   ClipboardList,
   FileCheck2,
   Files,
@@ -18,6 +19,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AdminModule, PermissionAction } from "@prisma/client";
+import type { AdminIdentity } from "@/lib/admin/auth";
 
 type NavigationItem = {
   label: string;
@@ -38,7 +41,6 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
     title: "Clients",
     items: [
       { label: "Client management", href: "/admin/clients", icon: Users },
-      { label: "Client details", icon: ClipboardList },
       { label: "Documents", href: "/admin/documents", icon: Files },
     ],
   },
@@ -57,7 +59,6 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
       { label: "Accounts overview", href: "/admin/accounts", icon: ChartNoAxesCombined },
       { label: "Income", href: "/admin/accounts/income", icon: CircleDollarSign },
       { label: "Expenses", href: "/admin/accounts/expenses", icon: Wallet },
-      { label: "Transactions", icon: Activity },
     ],
   },
   {
@@ -71,35 +72,68 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
   {
     title: "Reports",
     items: [
-      { label: "Billing reports", icon: ReceiptText },
-      { label: "Client reports", icon: Users },
-      { label: "Income and expense reports", icon: ChartNoAxesCombined },
+      { label: "Reports overview", href: "/admin/reports", icon: ChartNoAxesCombined },
+      { label: "Billing reports", href: "/admin/reports/billing", icon: ReceiptText },
+      { label: "Client reports", href: "/admin/reports/clients", icon: Users },
+      { label: "Income and expense reports", href: "/admin/reports/financial", icon: CircleDollarSign },
+      { label: "Tax & compliance reports", href: "/admin/reports/tax", icon: FileCheck2 },
     ],
   },
   {
     title: "Settings",
     items: [
-      { label: "Company profile", icon: Building2 },
-      { label: "User management", icon: Users },
-      { label: "Account settings", icon: Settings },
+      { label: "Company profile", href: "/admin/settings", icon: Building2 },
+      { label: "Staff management", href: "/admin/settings/staff", icon: Users },
+      { label: "Roles and permissions", href: "/admin/settings/roles", icon: Settings },
+      { label: "Account settings", href: "/admin/settings/account", icon: CircleUserRound },
     ],
   },
 ];
 
-export function AdminNavigation() {
+function requiredPermission(href: string) {
+  if (href.startsWith("/admin/clients")) return AdminModule.CLIENTS;
+  if (href.startsWith("/admin/billing") || href.startsWith("/admin/details-bills")) return AdminModule.BILLING;
+  if (href.startsWith("/admin/receipt-vouchers") || href.startsWith("/admin/payment-vouchers")) return AdminModule.VOUCHERS;
+  if (href.startsWith("/admin/accounts")) return AdminModule.ACCOUNTS;
+  if (href.startsWith("/admin/documents")) return AdminModule.DOCUMENTS;
+  if (href.startsWith("/admin/tax")) return AdminModule.TAX;
+  if (href.startsWith("/admin/reports")) return AdminModule.REPORTS;
+  if (href === "/admin/settings") return AdminModule.SETTINGS;
+  if (href === "/admin/settings/staff") return AdminModule.STAFF_MANAGEMENT;
+  if (href === "/admin/settings/roles") return null;
+  if (href === "/admin/settings/account") return null;
+  return AdminModule.DASHBOARD;
+}
+
+export function AdminNavigation({ admin }: { admin: AdminIdentity }) {
   const pathname = usePathname();
 
   return (
     <nav aria-label="Admin navigation" className="space-y-5">
-      {navigationSections.map((section) => (
+      {navigationSections.map((section) => {
+        const items = section.items.filter(({ href }) => {
+          if (!href || admin.roleName === "SUPER_ADMIN") return true;
+          if (href === "/admin/settings/roles") return false;
+          if (href === "/admin/settings/account") return true;
+          const module = requiredPermission(href);
+          return module !== null && admin.permissions.some((permission) =>
+            permission.module === module && permission.action === PermissionAction.VIEW
+          );
+        });
+        if (items.length === 0) return null;
+        return (
         <section key={section.title}>
           <h2 className="px-3 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/55">
             {section.title}
           </h2>
           <ul className="mt-1.5 space-y-0.5">
-            {section.items.map(({ href, icon: Icon, label }) => {
+            {items.map(({ href, icon: Icon, label }) => {
               const isActive = href === "/admin"
                 ? pathname === "/admin"
+                : href === "/admin/settings"
+                  ? pathname === href
+                : href === "/admin/reports" || href === "/admin/tax"
+                  ? pathname === href
                 : href === "/admin/accounts"
                   ? pathname === href
                   : Boolean(href && pathname.startsWith(href));
@@ -142,7 +176,8 @@ export function AdminNavigation() {
             })}
           </ul>
         </section>
-      ))}
+        );
+      })}
     </nav>
   );
 }

@@ -8,6 +8,7 @@ export const billsPerPage = 20;
 
 export type BillFilters = {
   query: string;
+  clientId: string;
   status: string;
   from: string;
   to: string;
@@ -25,6 +26,7 @@ export function normalizeBillFilters(params: Record<string, string | string[] | 
   const requestedPage = Number.parseInt(value("page"), 10);
   return {
     query: value("q").trim().slice(0, 100),
+    clientId: value("client").trim().slice(0, 191),
     status: value("status"),
     from: isDate(value("from")) ? value("from") : "",
     to: isDate(value("to")) ? value("to") : "",
@@ -34,6 +36,7 @@ export function normalizeBillFilters(params: Record<string, string | string[] | 
 
 function baseWhere(filters: BillFilters, today: Date): Prisma.BillWhereInput {
   const where: Prisma.BillWhereInput = { billType: "NORMAL" };
+  if (filters.clientId) where.clientId = filters.clientId;
   if (filters.query) {
     where.OR = [
       { billNumber: { contains: filters.query, mode: "insensitive" } },

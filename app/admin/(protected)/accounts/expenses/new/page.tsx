@@ -4,11 +4,13 @@ import { createExpense } from "../../actions";
 import { AccountForm } from "../../account-form";
 import { getExpenseFormData } from "@/lib/admin/accounts";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Add expense" };
 export const dynamic = "force-dynamic";
 
 export default async function NewExpensePage() {
+  await requirePermission("ACCOUNTS", "CREATE");
   const [data, settings] = await Promise.all([
     getExpenseFormData(),
     prisma.companySettings.findUnique({ where: { id: "company" }, select: { currencyCode: true } }),

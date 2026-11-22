@@ -36,6 +36,7 @@ function statusStyle(status: string) {
 function paginationHref(page: number, filters: ReturnType<typeof normalizeBillFilters>) {
   const params = new URLSearchParams();
   if (filters.query) params.set("q", filters.query);
+  if (filters.clientId) params.set("client", filters.clientId);
   if (filters.status) params.set("status", filters.status);
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
@@ -88,6 +89,7 @@ export default async function BillingPage({
 
       <section className="border border-border bg-surface">
         <form action="/admin/billing" className="grid gap-3 border-b border-border p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_10rem_9rem_9rem_auto] lg:items-end" method="get">
+          {filters.clientId && <input name="client" type="hidden" value={filters.clientId} />}
           <div>
             <label className="form-label" htmlFor="bill-search">Search</label>
             <input className="form-control" defaultValue={filters.query} id="bill-search" name="q" placeholder="Bill number or client" />

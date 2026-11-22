@@ -144,11 +144,9 @@ export function AccountList({
 export function AccountEntriesTable({
   title,
   entries,
-  currencyCode,
 }: {
   title: string;
   entries: Array<{ id: string; number: string; date: Date; party: string; amount: string; currencyCode: string; href: string }>;
-  currencyCode: string;
 }) {
   return (
     <section className="border border-border bg-surface">
@@ -167,7 +165,7 @@ export function AccountEntriesTable({
                   <td className="whitespace-nowrap px-4 py-3"><Link className="font-medium text-secondary hover:text-primary" href={entry.href}>{entry.number}</Link></td>
                   <td className="whitespace-nowrap px-4 py-3">{entry.date.toLocaleDateString("en-NP", { dateStyle: "medium", timeZone: "UTC" })}</td>
                   <td className="max-w-48 truncate px-4 py-3">{entry.party}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right">{formatCurrency(moneyToCents(entry.amount), entry.currencyCode || currencyCode)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right">{formatCurrency(moneyToCents(entry.amount), entry.currencyCode)}</td>
                 </tr>
               ))}
             </tbody>

@@ -4,11 +4,13 @@ import { notFound } from "next/navigation";
 import { createComplianceTask } from "../../actions";
 import { ComplianceTaskForm } from "../../tax-forms";
 import { getComplianceFormData } from "@/lib/admin/tax";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Create compliance task" };
 export const dynamic = "force-dynamic";
 
 export default async function NewComplianceTaskPage() {
+  await requirePermission("TAX", "CREATE");
   const data = await getComplianceFormData();
   if (!data) notFound();
   return (

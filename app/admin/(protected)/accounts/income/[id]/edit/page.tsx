@@ -5,11 +5,13 @@ import { z } from "zod";
 import { updateIncome } from "../../../actions";
 import { AccountForm } from "../../../account-form";
 import { getIncomeFormData } from "@/lib/admin/accounts";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Edit income" };
 export const dynamic = "force-dynamic";
 
 export default async function EditIncomePage({ params }: { params: Promise<{ id: string }> }) {
+  await requirePermission("ACCOUNTS", "EDIT");
   const { id } = await params;
   const parsed = z.string().min(1).max(191).safeParse(id);
   if (!parsed.success) notFound();

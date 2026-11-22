@@ -28,15 +28,22 @@ export default async function AccountsOverviewPage({
         <button className="button button-primary" type="submit">Apply dates</button>
       </form>
 
-      <section aria-label="Accounts summary" className="grid gap-3 sm:grid-cols-3">
-        <Summary label="Total income" value={formatCurrency(moneyToCents(overview.totalIncome), overview.currencyCode)} />
-        <Summary label="Total expenses" value={formatCurrency(moneyToCents(overview.totalExpenses), overview.currencyCode)} />
-        <Summary label="Net balance" value={formatCurrency(moneyToCents(overview.netBalance), overview.currencyCode)} />
-      </section>
+      {overview.totalsByCurrency.length === 0 ? (
+        <p className="border border-border bg-surface px-4 py-6 text-sm text-text-secondary">No financial activity recorded for this period.</p>
+      ) : overview.totalsByCurrency.map((totals) => (
+        <section aria-label={`${totals.currencyCode} accounts summary`} className="space-y-3" key={totals.currencyCode}>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary">{totals.currencyCode}</h2>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Summary label="Total income" value={formatCurrency(moneyToCents(totals.totalIncome), totals.currencyCode)} />
+            <Summary label="Total expenses" value={formatCurrency(moneyToCents(totals.totalExpenses), totals.currencyCode)} />
+            <Summary label="Net balance" value={formatCurrency(moneyToCents(totals.netBalance), totals.currencyCode)} />
+          </div>
+        </section>
+      ))}
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <AccountEntriesTable currencyCode={overview.currencyCode} entries={overview.income} title="Recent income" />
-        <AccountEntriesTable currencyCode={overview.currencyCode} entries={overview.expenses} title="Recent expenses" />
+        <AccountEntriesTable entries={overview.income} title="Recent income" />
+        <AccountEntriesTable entries={overview.expenses} title="Recent expenses" />
       </div>
     </div>
   );

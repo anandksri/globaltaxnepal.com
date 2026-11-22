@@ -30,6 +30,15 @@ export function VoucherDocument({
     address: string | null;
     phone: string | null;
     email: string | null;
+    website: string | null;
+    panNumber: string | null;
+    vatNumber: string | null;
+    logoStorageKey: string | null;
+    bankName: string | null;
+    bankAccountName: string | null;
+    bankAccountNumber: string | null;
+    bankBranch: string | null;
+    paymentInstructions: string | null;
   } | null;
 }) {
   return (
@@ -41,10 +50,13 @@ export function VoucherDocument({
             {company?.address && <p>{company.address}</p>}
             {company?.phone && <p>{company.phone}</p>}
             {company?.email && <p>{company.email}</p>}
+            {company?.website && <p>{company.website}</p>}
+            {company?.panNumber && <p>PAN: {company.panNumber}</p>}
+            {company?.vatNumber && <p>VAT: {company.vatNumber}</p>}
           </div>
         </div>
         <div className="text-right">
-          <Image alt="Global Tax Nepal" className="ml-auto h-auto w-52" height={68} priority src="/assets/global-tax-nepal-logo.svg" width={390} />
+          <Image alt={company?.name || "Global Tax Nepal"} className="ml-auto h-auto w-52" height={68} priority src={company?.logoStorageKey ? "/admin/settings/logo" : "/assets/global-tax-nepal-logo.svg"} unoptimized={Boolean(company?.logoStorageKey)} width={390} />
           <h2 className="mt-5 text-2xl font-semibold uppercase tracking-wide text-primary">{title}</h2>
           <p className="mt-1 font-medium text-text">{voucherNumber}</p>
         </div>
@@ -83,6 +95,12 @@ export function VoucherDocument({
       <div className="mt-20 flex justify-end">
         <div className="w-56 border-t border-text pt-2 text-center text-xs text-text-secondary">Authorized signature</div>
       </div>
+      {(company?.bankName || company?.bankAccountName || company?.bankAccountNumber || company?.bankBranch || company?.paymentInstructions) && (
+        <div className="mt-8 border-t border-border pt-4 text-sm text-text-secondary">
+          <h3 className="font-semibold text-primary">Payment information</h3>
+          {[company.bankName, company.bankAccountName, company.bankAccountNumber, company.bankBranch, company.paymentInstructions].map((value, index) => value ? <p key={index}>{value}</p> : null)}
+        </div>
+      )}
     </section>
   );
 }

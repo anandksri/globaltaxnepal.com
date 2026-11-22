@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getCurrentAdmin } from "@/lib/admin/auth";
+import {
+  getCurrentAdmin,
+  getPendingTwoFactorSession,
+} from "@/lib/admin/auth";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
@@ -10,6 +13,9 @@ export const metadata: Metadata = {
 export default async function AdminLoginPage() {
   if (await getCurrentAdmin()) {
     redirect("/admin");
+  }
+  if (await getPendingTwoFactorSession()) {
+    redirect("/admin/verify");
   }
 
   return (

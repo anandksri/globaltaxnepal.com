@@ -1,3 +1,5 @@
+ "use client";
+
 import {
   ArrowUpRight,
   Building2,
@@ -38,7 +40,7 @@ export function AdminShell({ admin, children }: AdminShellProps) {
           </span>
         </a>
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
-          <AdminNavigation />
+          <AdminNavigation admin={admin} />
         </div>
         <div className="border-t border-white/10 p-4 text-xs leading-5 text-white/55">
           Internal management workspace
@@ -67,7 +69,7 @@ export function AdminShell({ admin, children }: AdminShellProps) {
                     }
                   }}
                 >
-                  <AdminNavigation />
+                  <AdminNavigation admin={admin} />
                 </div>
               </details>
               <div className="min-w-0">

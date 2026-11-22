@@ -5,11 +5,13 @@ import { z } from "zod";
 import { updateTaxRecord } from "../../../actions";
 import { TaxRecordForm } from "../../../tax-forms";
 import { getTaxFormData } from "@/lib/admin/tax";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Edit tax record" };
 export const dynamic = "force-dynamic";
 
 export default async function EditTaxRecordPage({ params }: { params: Promise<{ id: string }> }) {
+  await requirePermission("TAX", "EDIT");
   const { id } = await params;
   const parsed = z.string().min(1).max(191).safeParse(id);
   if (!parsed.success) notFound();

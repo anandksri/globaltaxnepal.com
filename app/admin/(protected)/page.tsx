@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
+import { getAccountsOverview } from "@/lib/admin/accounts";
+import { formatCurrency, moneyToCents } from "@/lib/admin/billing";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -26,7 +28,12 @@ function SummaryItem({
 }
 
 export default async function AdminOverviewPage() {
-  await requireAdmin();
+  const admin = await requirePermission("DASHBOARD", "VIEW");
+  const canViewAccounts =
+    admin.roleName === "SUPER_ADMIN" ||
+    admin.permissions.some(
+      (permission) => permission.module === "ACCOUNTS" && permission.action === "VIEW",
+    );
 
   const [clientCount, userCount, activityCount, recentActivity, settings] =
     await Promise.all([
@@ -50,6 +57,7 @@ export default async function AdminOverviewPage() {
         select: { name: true, email: true, phone: true },
       }),
     ]);
+  const accountOverview = canViewAccounts ? await getAccountsOverview() : null;
 
   return (
     <div className="space-y-8">
@@ -62,6 +70,43 @@ export default async function AdminOverviewPage() {
         <SummaryItem label="User accounts" value={userCount} />
         <SummaryItem label="Recorded activity" value={activityCount} />
       </section>
+
+      {accountOverview && (
+        <section aria-labelledby="financial-summary-heading" className="space-y-3">
+          <h2 className="text-base font-semibold text-primary" id="financial-summary-heading">
+            Financial summary
+          </h2>
+          {accountOverview.totalsByCurrency.length ? (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {accountOverview.totalsByCurrency.map((totals) => (
+                <section className="border border-border bg-surface p-4" key={totals.currencyCode}>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
+                    {totals.currencyCode}
+                  </h3>
+                  <dl className="mt-3 space-y-2 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-text-secondary">Income</dt>
+                      <dd className="font-medium text-text">{formatCurrency(moneyToCents(totals.totalIncome), totals.currencyCode)}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-text-secondary">Expenses</dt>
+                      <dd className="font-medium text-text">{formatCurrency(moneyToCents(totals.totalExpenses), totals.currencyCode)}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3 border-t border-border pt-2">
+                      <dt className="font-medium text-text">Net balance</dt>
+                      <dd className="font-semibold text-primary">{formatCurrency(moneyToCents(totals.netBalance), totals.currencyCode)}</dd>
+                    </div>
+                  </dl>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <p className="border border-border bg-surface px-4 py-5 text-sm text-text-secondary">
+              No financial activity recorded.
+            </p>
+          )}
+        </section>
+      )}
 
       <section
         aria-labelledby="company-profile-heading"

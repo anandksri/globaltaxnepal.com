@@ -74,10 +74,31 @@ enum ComplianceStatus {
   COMPLETED
 }
 
+enum AdminModule {
+  DASHBOARD
+  CLIENTS
+  BILLING
+  VOUCHERS
+  ACCOUNTS
+  DOCUMENTS
+  TAX
+  REPORTS
+  SETTINGS
+  STAFF_MANAGEMENT
+}
+
+enum PermissionAction {
+  VIEW
+  CREATE
+  EDIT
+  DELETE
+}
+
 model User {
   id           String        @id @default(cuid())
   name         String?       @db.VarChar(100)
   email        String        @unique @db.VarChar(254)
+  phone        String?       @db.VarChar(40)
   passwordHash String        @db.VarChar(255)
   isActive     Boolean       @default(true)
   roleId       String
@@ -92,6 +113,8 @@ model User {
   uploadedDocuments Document[] @relation("DocumentUploadedBy")
   assignedComplianceTasks ComplianceTask[] @relation("ComplianceTaskAssignedTo")
   createdComplianceTasks ComplianceTask[] @relation("ComplianceTaskCreatedBy")
+  invitations UserInvitation[] @relation("InvitationRecipient")
+  createdInvitations UserInvitation[] @relation("InvitationCreatedBy")
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -104,6 +127,7 @@ model Role {
   name        String   @unique @db.VarChar(50)
   description String?  @db.VarChar(255)
   users       User[]
+  permissions RolePermission[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -152,8 +176,44 @@ model CompanySettings {
   currencyCode String @default("NPR") @db.VarChar(3)
   invoicePrefix String? @db.VarChar(12)
   paymentInstructions String? @db.Text
+  panNumber String? @db.VarChar(20)
+  vatNumber String? @db.VarChar(30)
+  receiptVoucherPrefix String? @db.VarChar(12)
+  paymentVoucherPrefix String? @db.VarChar(12)
+  bankName String? @db.VarChar(150)
+  bankAccountName String? @db.VarChar(200)
+  bankAccountNumber String? @db.VarChar(100)
+  bankBranch String? @db.VarChar(150)
+  logoStorageKey String? @unique @db.VarChar(100)
+  logoMimeType String? @db.VarChar(100)
+  logoOriginalName String? @db.VarChar(255)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model RolePermission {
+  roleId String
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  module AdminModule
+  action PermissionAction
+
+  @@id([roleId, module, action])
+  @@index([module, action])
+}
+
+model UserInvitation {
+  id String @id @default(cuid())
+  tokenHash String @unique @db.Char(64)
+  userId String
+  user User @relation("InvitationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy User @relation("InvitationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt, usedAt])
 }
 
 model BillNumberSequence {

@@ -10,7 +10,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { BillingActionState } from "@/app/admin/(protected)/billing/actions";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
 
 export type AccountActionState = {
@@ -172,7 +172,7 @@ export async function createIncome(
   _state: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("ACCOUNTS", "CREATE");
   const parsed = incomeSchema.safeParse({
     ...accountFormData(formData),
     clientId: formData.get("clientId") ?? "",
@@ -258,7 +258,7 @@ export async function updateIncome(
   _state: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("ACCOUNTS", "EDIT");
   const validId = z.string().min(1).max(191).safeParse(id);
   const parsed = incomeSchema.safeParse({
     ...accountFormData(formData),
@@ -338,7 +338,7 @@ export async function deleteIncome(
   _state: AccountActionState,
   _formData: FormData,
 ): Promise<AccountActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("ACCOUNTS", "DELETE");
   const validId = z.string().min(1).max(191).safeParse(id);
   if (!validId.success) return { error: "This income record could not be found." };
   try {
@@ -363,7 +363,7 @@ export async function createExpense(
   _state: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("ACCOUNTS", "CREATE");
   const parsed = expenseSchema.safeParse({
     ...accountFormData(formData),
     paidTo: formData.get("paidTo"),
@@ -430,7 +430,7 @@ export async function updateExpense(
   _state: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("ACCOUNTS", "EDIT");
   const validId = z.string().min(1).max(191).safeParse(id);
   const parsed = expenseSchema.safeParse({
     ...accountFormData(formData),
@@ -503,7 +503,7 @@ export async function deleteExpense(
   _state: AccountActionState,
   _formData: FormData,
 ): Promise<AccountActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("ACCOUNTS", "DELETE");
   const validId = z.string().min(1).max(191).safeParse(id);
   if (!validId.success) return { error: "This expense record could not be found." };
   try {
@@ -528,7 +528,7 @@ async function createCategory(
   type: AccountCategoryType,
   formData: FormData,
 ): Promise<AccountActionState> {
-  await requireAdmin();
+  await requirePermission("ACCOUNTS", "CREATE");
   const parsed = z.string().trim().min(1, "Enter a category name.").max(100).safeParse(formData.get("name"));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter a category name." };
   try {

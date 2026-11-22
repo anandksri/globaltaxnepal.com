@@ -4,11 +4,13 @@ import { createIncome } from "../../actions";
 import { AccountForm } from "../../account-form";
 import { getIncomeFormData } from "@/lib/admin/accounts";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Add income" };
 export const dynamic = "force-dynamic";
 
 export default async function NewIncomePage() {
+  await requirePermission("ACCOUNTS", "CREATE");
   const [data, settings] = await Promise.all([
     getIncomeFormData(),
     prisma.companySettings.findUnique({ where: { id: "company" }, select: { currencyCode: true } }),

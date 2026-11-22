@@ -5,6 +5,7 @@ import { z } from "zod";
 import { updateReceiptVoucher } from "../../../vouchers/actions";
 import { VoucherForm } from "../../../vouchers/voucher-form";
 import { getReceiptVoucherEditData } from "@/lib/admin/vouchers";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Edit receipt voucher" };
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export default async function EditReceiptVoucherPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("VOUCHERS", "EDIT");
   const { id } = await params;
   const validId = z.string().min(1).max(191).safeParse(id);
   if (!validId.success) notFound();

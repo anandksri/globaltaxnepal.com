@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { NextResponse, type NextRequest } from "next/server";
-import { getCurrentAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 import { getDocumentPath } from "@/lib/admin/document-storage";
 import { getDocument } from "@/lib/admin/documents";
 
@@ -11,8 +11,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const admin = await getCurrentAdmin();
-  if (!admin) return NextResponse.json({ error: "Administrator authentication is required." }, { status: 401 });
+  await requirePermission("DOCUMENTS", "VIEW");
 
   const { id } = await params;
   const document = await getDocument(id);

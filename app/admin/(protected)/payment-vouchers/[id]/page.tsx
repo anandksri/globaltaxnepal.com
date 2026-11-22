@@ -21,7 +21,7 @@ export default async function PaymentVoucherPage({
   if (!validId.success) notFound();
   const [voucher, company] = await Promise.all([
     getPaymentVoucher(validId.data),
-    prisma.companySettings.findUnique({ where: { id: "company" }, select: { name: true, address: true, phone: true, email: true } }),
+    prisma.companySettings.findUnique({ where: { id: "company" } }),
   ]);
   if (!voucher) notFound();
   return (

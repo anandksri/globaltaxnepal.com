@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "../actions";
 import { ClientForm } from "../client-form";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Add client" };
 
-export default function NewClientPage() {
+export default async function NewClientPage() {
+  await requirePermission("CLIENTS", "CREATE");
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-6">

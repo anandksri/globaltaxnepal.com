@@ -12,7 +12,7 @@ import {
   parseBillFormData,
   type BillInput,
 } from "@/lib/admin/billing";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
 
 export type BillingActionState = {
@@ -199,7 +199,7 @@ export async function createBill(
   _previousState: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("BILLING", "CREATE");
   const input = getInputState(formData);
   if (!input.data) return input;
   const intent = formData.get("intent") === "issue" ? "ISSUED" : "DRAFT";
@@ -255,7 +255,7 @@ export async function updateDraftBill(
   _previousState: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("BILLING", "EDIT");
   const validId = z.string().min(1).max(191).safeParse(billId);
   if (!validId.success) return { error: "This bill could not be found." };
   const input = getInputState(formData);
@@ -322,7 +322,7 @@ export async function recordPayment(
   _previousState: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("BILLING", "EDIT");
   const validId = z.string().min(1).max(191).safeParse(billId);
   if (!validId.success) return { error: "This bill could not be found." };
   const parsed = z.object({
@@ -423,7 +423,7 @@ export async function cancelBill(
   _previousState: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("BILLING", "DELETE");
   const validId = z.string().min(1).max(191).safeParse(billId);
   if (!validId.success) return { error: "This bill could not be found." };
   const reason = z.string().trim().min(5, "Provide a cancellation reason.").max(500).safeParse(formData.get("reason"));

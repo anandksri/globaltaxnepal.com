@@ -5,6 +5,7 @@ import { BillStatus } from "@prisma/client";
 import { updateDraftBill } from "../../actions";
 import { BillForm } from "../../bill-form";
 import { getBillEditData } from "@/lib/admin/billing-data";
+import { requirePermission } from "@/lib/admin/auth";
 import { z } from "zod";
 
 export const metadata: Metadata = { title: "Edit draft bill" };
@@ -15,6 +16,7 @@ export default async function EditBillPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("BILLING", "EDIT");
   const { id } = await params;
   const parsedId = z.string().min(1).max(191).safeParse(id);
   if (!parsedId.success) notFound();

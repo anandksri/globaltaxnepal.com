@@ -3,11 +3,13 @@ import Link from "next/link";
 import { VoucherForm } from "../../vouchers/voucher-form";
 import { createReceiptVoucher } from "../../vouchers/actions";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "New receipt voucher" };
 export const dynamic = "force-dynamic";
 
 export default async function NewReceiptVoucherPage() {
+  await requirePermission("VOUCHERS", "CREATE");
   const [clients, settings] = await prisma.$transaction([
     prisma.client.findMany({
       where: { isActive: true },

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { calculateBill, formatCents, parseBillFormData, type BillInput } from "@/lib/admin/billing";
 import type { BillingActionState } from "@/app/admin/(protected)/billing/actions";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
 
 function fieldErrors(issues: { path: PropertyKey[]; message: string }[]) {
@@ -156,7 +156,7 @@ export async function createDetailsBill(
   _previousState: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("BILLING", "CREATE");
   const input = parseInput(formData);
   if (!input.data) return input;
   const status = formData.get("intent") === "issue" ? BillStatus.ISSUED : BillStatus.DRAFT;
@@ -201,7 +201,7 @@ export async function updateDetailsBill(
   _previousState: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("BILLING", "EDIT");
   const id = z.string().min(1).max(191).safeParse(billId);
   if (!id.success) return { error: "This bill could not be found." };
   const input = parseInput(formData);
@@ -261,7 +261,7 @@ export async function markDetailsBillPaid(
   _previousState: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("BILLING", "EDIT");
   const id = z.string().min(1).max(191).safeParse(billId);
   const payment = paymentSchema.safeParse({
     paymentDate: formData.get("paymentDate"),
@@ -326,7 +326,7 @@ export async function cancelDetailsBill(
   _previousState: BillingActionState,
   formData: FormData,
 ): Promise<BillingActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("BILLING", "DELETE");
   const id = z.string().min(1).max(191).safeParse(billId);
   const reason = z.string().trim().min(5).max(500).safeParse(formData.get("reason"));
   if (!id.success) return { error: "This bill could not be found." };

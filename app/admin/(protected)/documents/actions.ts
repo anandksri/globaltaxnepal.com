@@ -4,7 +4,7 @@ import { DocumentCategory, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 import { removeStoredDocument } from "@/lib/admin/document-storage";
 import { prisma } from "@/lib/prisma";
 
@@ -43,7 +43,7 @@ export async function updateDocument(
   _state: DocumentActionState,
   formData: FormData,
 ): Promise<DocumentActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("DOCUMENTS", "EDIT");
   const id = z.string().min(1).max(191).safeParse(documentId);
   const parsed = getMetadata(formData);
   if (!id.success) return { error: "This document could not be found." };
@@ -109,7 +109,7 @@ export async function deleteDocument(
   _state: DocumentActionState,
   _formData: FormData,
 ): Promise<DocumentActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("DOCUMENTS", "DELETE");
   const id = z.string().min(1).max(191).safeParse(documentId);
   if (!id.success) return { error: "This document could not be found." };
   let storageKey = "";

@@ -3,11 +3,13 @@ import Link from "next/link";
 import { VoucherForm } from "../../vouchers/voucher-form";
 import { createPaymentVoucher } from "../../vouchers/actions";
 import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "New payment voucher" };
 export const dynamic = "force-dynamic";
 
 export default async function NewPaymentVoucherPage() {
+  await requirePermission("VOUCHERS", "CREATE");
   const settings = await prisma.companySettings.findUnique({
     where: { id: "company" },
     select: { currencyCode: true },

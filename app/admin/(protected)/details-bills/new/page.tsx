@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createDetailsBill } from "../actions";
 import { BillForm } from "@/app/admin/(protected)/billing/bill-form";
+import { requirePermission } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = { title: "Create details bill" };
 export const dynamic = "force-dynamic";
 
 export default async function NewDetailsBillPage() {
+  await requirePermission("BILLING", "CREATE");
   const [clients, settings] = await prisma.$transaction([
     prisma.client.findMany({
       where: { isActive: true },

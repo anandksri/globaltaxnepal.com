@@ -4,11 +4,13 @@ import { notFound } from "next/navigation";
 import { createTaxRecord } from "../../actions";
 import { TaxRecordForm } from "../../tax-forms";
 import { getTaxFormData } from "@/lib/admin/tax";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Add client tax record" };
 export const dynamic = "force-dynamic";
 
 export default async function NewTaxRecordPage() {
+  await requirePermission("TAX", "CREATE");
   const data = await getTaxFormData();
   if (!data) notFound();
   return (

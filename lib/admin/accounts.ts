@@ -274,7 +274,7 @@ export async function listExpenseRecords(
       description: record.description,
       category: record.category.name,
       amount: record.amount.toFixed(2),
-      currencyCode: "NPR",
+      currencyCode: record.currencyCode,
       href: `/admin/accounts/expenses/${record.id}`,
       kind: "Expense record",
     })),
@@ -487,24 +487,23 @@ export async function getAccountsOverview(from = "", to = "") {
   const expenseWhere: Prisma.ExpenseRecordWhereInput = date ? { expenseDate: date } : {};
   const paymentVoucherWhere: Prisma.PaymentVoucherWhereInput = { expenseRecord: null, ...(date ? { voucherDate: date } : {}) };
   const [
-    incomeAggregate,
-    paymentAggregate,
-    receiptAggregate,
-    expenseAggregate,
-    voucherAggregate,
+    incomeTotals,
+    paymentTotals,
+    receiptTotals,
+    expenseTotals,
+    voucherTotals,
     incomeRecords,
     payments,
     receipts,
     expenseRecords,
     vouchers,
-    settings,
   ] =
     await prisma.$transaction([
-      prisma.incomeRecord.aggregate({ where: incomeWhere, _sum: { amount: true } }),
-      prisma.payment.aggregate({ where: paymentWhere, _sum: { amount: true } }),
-      prisma.receiptVoucher.aggregate({ where: receiptWhere, _sum: { amount: true } }),
-      prisma.expenseRecord.aggregate({ where: expenseWhere, _sum: { amount: true } }),
-      prisma.paymentVoucher.aggregate({ where: paymentVoucherWhere, _sum: { amount: true } }),
+      prisma.incomeRecord.findMany({ where: incomeWhere, select: { amount: true, currencyCode: true } }),
+      prisma.payment.findMany({ where: paymentWhere, select: { amount: true, bill: { select: { currencyCode: true } } } }),
+      prisma.receiptVoucher.findMany({ where: receiptWhere, select: { amount: true, currencyCode: true } }),
+      prisma.expenseRecord.findMany({ where: expenseWhere, select: { amount: true, currencyCode: true } }),
+      prisma.paymentVoucher.findMany({ where: paymentVoucherWhere, select: { amount: true, currencyCode: true } }),
       prisma.incomeRecord.findMany({
         where: incomeWhere,
         orderBy: [{ incomeDate: "desc" }, { id: "desc" }],
@@ -535,7 +534,6 @@ export async function getAccountsOverview(from = "", to = "") {
         take: 5,
         select: { id: true, voucherNumber: true, voucherDate: true, payeeName: true, purpose: true, amount: true, currencyCode: true },
       }),
-      prisma.companySettings.findUnique({ where: { id: "company" }, select: { currencyCode: true } }),
     ]);
   const incomeEntries = orderEntries([
     ...incomeRecords.map((record) => ({
@@ -567,16 +565,29 @@ export async function getAccountsOverview(from = "", to = "") {
       amount: voucher.amount, currencyCode: voucher.currencyCode, href: `/admin/payment-vouchers/${voucher.id}`,
     })),
   ]);
-  const totalIncome = (incomeAggregate._sum.amount ?? new Prisma.Decimal(0))
-    .add(paymentAggregate._sum.amount ?? new Prisma.Decimal(0))
-    .add(receiptAggregate._sum.amount ?? new Prisma.Decimal(0));
-  const totalExpenses = (expenseAggregate._sum.amount ?? new Prisma.Decimal(0))
-    .add(voucherAggregate._sum.amount ?? new Prisma.Decimal(0));
+  const totalsByCurrency = new Map<string, { income: Prisma.Decimal; expenses: Prisma.Decimal }>();
+  const addTotal = (currencyCode: string, type: "income" | "expenses", amount: Prisma.Decimal) => {
+    const totals = totalsByCurrency.get(currencyCode) ?? {
+      income: new Prisma.Decimal(0),
+      expenses: new Prisma.Decimal(0),
+    };
+    totals[type] = totals[type].add(amount);
+    totalsByCurrency.set(currencyCode, totals);
+  };
+  for (const record of incomeTotals) addTotal(record.currencyCode, "income", record.amount);
+  for (const payment of paymentTotals) addTotal(payment.bill.currencyCode, "income", payment.amount);
+  for (const receipt of receiptTotals) addTotal(receipt.currencyCode, "income", receipt.amount);
+  for (const record of expenseTotals) addTotal(record.currencyCode, "expenses", record.amount);
+  for (const voucher of voucherTotals) addTotal(voucher.currencyCode, "expenses", voucher.amount);
+
+  const summarizedTotals = [...totalsByCurrency].sort(([left], [right]) => left.localeCompare(right)).map(([currencyCode, totals]) => ({
+    currencyCode,
+    totalIncome: totals.income.toFixed(2),
+    totalExpenses: totals.expenses.toFixed(2),
+    netBalance: totals.income.sub(totals.expenses).toFixed(2),
+  }));
   return {
-    currencyCode: settings?.currencyCode ?? "NPR",
-    totalIncome: totalIncome.toFixed(2),
-    totalExpenses: totalExpenses.toFixed(2),
-    netBalance: totalIncome.sub(totalExpenses).toFixed(2),
+    totalsByCurrency: summarizedTotals,
     income: incomeEntries.slice(0, 5).map((entry) => ({ ...entry, amount: entry.amount.toFixed(2) })),
     expenses: expenseEntries.slice(0, 5).map((entry) => ({ ...entry, amount: entry.amount.toFixed(2) })),
   };

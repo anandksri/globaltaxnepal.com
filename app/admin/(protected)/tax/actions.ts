@@ -4,7 +4,7 @@ import { ComplianceStatus, Prisma, TaxFilingStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requirePermission } from "@/lib/admin/auth";
 import { isDocumentForClient } from "@/lib/admin/tax";
 import { prisma } from "@/lib/prisma";
 
@@ -132,7 +132,7 @@ export async function createTaxRecord(
   _state: TaxActionState,
   formData: FormData,
 ): Promise<TaxActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("TAX", "CREATE");
   const parsed = readRecord(formData);
   if (!parsed.success) return { error: "Review the highlighted fields and try again.", fieldErrors: fieldErrors(parsed.error.issues) };
   let recordId: string;
@@ -191,7 +191,7 @@ export async function updateTaxRecord(
   _state: TaxActionState,
   formData: FormData,
 ): Promise<TaxActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("TAX", "EDIT");
   const id = z.string().min(1).max(191).safeParse(recordId);
   const parsed = readRecord(formData);
   if (!id.success) return { error: "This tax record could not be found." };
@@ -266,7 +266,7 @@ export async function createComplianceTask(
   _state: TaxActionState,
   formData: FormData,
 ): Promise<TaxActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("TAX", "CREATE");
   const parsed = readTask(formData);
   if (!parsed.success) return { error: "Review the highlighted fields and try again.", fieldErrors: fieldErrors(parsed.error.issues) };
   let taskId: string;
@@ -280,7 +280,7 @@ export async function createComplianceTask(
       const assignedToId = parsed.data.assignedToId || null;
       if (assignedToId) {
         const staff = await transaction.user.findFirst({
-          where: { id: assignedToId, isActive: true, role: { name: "ADMIN" } },
+          where: { id: assignedToId, isActive: true },
           select: { id: true },
         });
         if (!staff) throw new Error("COMPLIANCE_ASSIGNEE_NOT_FOUND");
@@ -333,7 +333,7 @@ export async function updateComplianceTask(
   _state: TaxActionState,
   formData: FormData,
 ): Promise<TaxActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("TAX", "EDIT");
   const id = z.string().min(1).max(191).safeParse(taskId);
   const parsed = readTask(formData);
   if (!id.success) return { error: "This compliance task could not be found." };
@@ -353,7 +353,7 @@ export async function updateComplianceTask(
       const assignedToId = parsed.data.assignedToId || null;
       if (assignedToId) {
         const staff = await transaction.user.findFirst({
-          where: { id: assignedToId, isActive: true, role: { name: "ADMIN" } },
+          where: { id: assignedToId, isActive: true },
           select: { id: true },
         });
         if (!staff) return "assignee" as const;
@@ -406,7 +406,7 @@ export async function completeComplianceTask(
   _state: TaxActionState,
   _formData: FormData,
 ): Promise<TaxActionState> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("TAX", "EDIT");
   const id = z.string().min(1).max(191).safeParse(taskId);
   if (!id.success) return { error: "This compliance task could not be found." };
   try {
