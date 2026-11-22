@@ -66,6 +66,12 @@ export function SiteHeader() {
               {label}
             </a>
           ))}
+          <a
+            className="button button-primary whitespace-nowrap px-4 py-2"
+            href="#contact"
+          >
+            Enquire Now
+          </a>
         </nav>
 
         <button
@@ -102,6 +108,13 @@ export function SiteHeader() {
               {label}
             </a>
           ))}
+          <a
+            className="button button-primary mt-3 w-full"
+            href="#contact"
+            onClick={closeMenu}
+          >
+            Enquire Now
+          </a>
         </div>
       </nav>
     </header>

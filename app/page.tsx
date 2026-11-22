@@ -874,33 +874,15 @@ export default function HomePage() {
             <p className="text-xs text-text-secondary">
               © {new Date().getFullYear()} Global Tax Nepal. All rights reserved.
             </p>
-            <p className="text-[0.65rem] leading-5 text-text-secondary">
-              Devotional watermarks by AdityaSharma92 and Shoot stufz,{" "}
+            <p className="text-xs text-text-secondary">
+              Developed by{" "}
               <a
-                className="underline underline-offset-2"
-                href="https://creativecommons.org/licenses/by-sa/4.0/"
-                rel="noreferrer"
+                className="font-medium text-secondary underline underline-offset-2 transition-colors duration-200 ease-out hover:text-primary"
+                href="https://anandkeshari.com.np"
+                rel="noopener noreferrer"
                 target="_blank"
               >
-                CC BY-SA 4.0
-              </a>
-              .{" "}
-              <a
-                className="underline underline-offset-2"
-                href="https://commons.wikimedia.org/wiki/File:Khatu_Shyam_Ji.jpg"
-                rel="noreferrer"
-                target="_blank"
-              >
-                Khatu Shyam Ji
-              </a>{" "}
-              ·{" "}
-              <a
-                className="underline underline-offset-2"
-                href="https://commons.wikimedia.org/wiki/File:Ganesh_Murti_-_Traditional_Idol_of_Lord_Ganesha_018.jpg"
-                rel="noreferrer"
-                target="_blank"
-              >
-                Shri Ganesh Ji
+                Anand Keshari
               </a>
             </p>
           </div>
