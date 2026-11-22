@@ -104,16 +104,53 @@ export async function getReceiptVoucherEditData(id: string) {
     prisma.client.findMany({
       where: { isActive: true },
       orderBy: { displayName: "asc" },
-      select: { id: true, displayName: true },
+      select: {
+        id: true,
+        displayName: true,
+        contactPerson: true,
+        phone: true,
+        panNumber: true,
+        province: true,
+        district: true,
+        municipality: true,
+        wardNumber: true,
+        streetAddress: true,
+        address: true,
+      },
     }),
   ]);
   if (!voucher) return null;
   const currentClient = await prisma.client.findUnique({
     where: { id: voucher.clientId },
-    select: { id: true, displayName: true, isActive: true },
+    select: {
+      id: true,
+      displayName: true,
+      isActive: true,
+      contactPerson: true,
+      phone: true,
+      panNumber: true,
+      province: true,
+      district: true,
+      municipality: true,
+      wardNumber: true,
+      streetAddress: true,
+      address: true,
+    },
   });
   if (currentClient && !clients.some((client) => client.id === currentClient.id)) {
-    clients.push({ id: currentClient.id, displayName: `${currentClient.displayName} (inactive)` });
+    clients.push({
+      id: currentClient.id,
+      displayName: `${currentClient.displayName} (inactive)`,
+      contactPerson: currentClient.contactPerson,
+      phone: currentClient.phone,
+      panNumber: currentClient.panNumber,
+      province: currentClient.province,
+      district: currentClient.district,
+      municipality: currentClient.municipality,
+      wardNumber: currentClient.wardNumber,
+      streetAddress: currentClient.streetAddress,
+      address: currentClient.address,
+    });
   }
   return { voucher, clients };
 }

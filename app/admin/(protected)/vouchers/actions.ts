@@ -23,7 +23,8 @@ const commonSchema = z.object({
 
 const receiptSchema = commonSchema.extend({
   clientId: z.string().trim().min(1, "Select a client."),
-  description: z.string().trim().min(1, "Enter a description.").max(1000),
+  customVoucherNumber: z.string().trim().max(40),
+  description: z.string().trim().max(1000),
 });
 
 const paymentSchema = commonSchema.extend({
@@ -46,6 +47,7 @@ function readForm(formData: FormData) {
     amount: formData.get("amount"),
     method: formData.get("method"),
     reference: formData.get("reference") ?? "",
+    customVoucherNumber: formData.get("customVoucherNumber") ?? "",
   };
 }
 
@@ -119,7 +121,9 @@ export async function createReceiptVoucher(
         where: { id: "company" },
         select: { currencyCode: true },
       });
-      const voucherNumber = await nextVoucherNumber(transaction, VoucherType.RECEIPT, voucherDate);
+      const voucherNumber = parsed.data.customVoucherNumber
+        ? parsed.data.customVoucherNumber
+        : await nextVoucherNumber(transaction, VoucherType.RECEIPT, voucherDate);
       const created = await transaction.receiptVoucher.create({
         data: {
           voucherNumber,
@@ -214,6 +218,7 @@ export async function updateReceiptVoucher(
       await transaction.receiptVoucher.update({
         where: { id: id.data },
         data: {
+          voucherNumber: parsed.data.customVoucherNumber || current.voucherNumber,
           clientId: client.id,
           clientName: client.displayName,
           voucherDate,
