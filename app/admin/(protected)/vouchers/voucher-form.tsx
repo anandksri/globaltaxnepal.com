@@ -66,6 +66,12 @@ export function VoucherForm({
   const [paymentPurpose, setPaymentPurpose] = useState(initial?.purpose ?? "");
   const [paymentMethod, setPaymentMethod] = useState(initial?.method ?? "CASH");
   const [voucherDate, setVoucherDate] = useState(initial?.voucherDate ?? new Date().toISOString().slice(0, 10));
+  const [customerMode, setCustomerMode] = useState<"existing" | "manual">("existing");
+  const [manualName, setManualName] = useState("");
+  const [manualCompanyName, setManualCompanyName] = useState("");
+  const [manualContact, setManualContact] = useState("");
+  const [manualAddress, setManualAddress] = useState("");
+  const [manualPan, setManualPan] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   const selectedClient = clients.find((client) => client.id === clientId);
@@ -97,6 +103,12 @@ export function VoucherForm({
     setPaymentPurpose("");
     setPaymentMethod("CASH");
     setVoucherDate(new Date().toISOString().slice(0, 10));
+    setCustomerMode("existing");
+    setManualName("");
+    setManualCompanyName("");
+    setManualContact("");
+    setManualAddress("");
+    setManualPan("");
   }
 
   if (kind === "receipt") {
@@ -170,46 +182,82 @@ export function VoucherForm({
             <h2 className="text-lg font-semibold text-primary" id="receipt-customer-details">
               <span className="mr-3 text-text-secondary">01</span>Customer details
             </h2>
-            <select aria-label="Customer type" className="form-control w-auto min-w-44" defaultValue="existing">
+            <select
+              aria-label="Customer type"
+              className="form-control w-auto min-w-44"
+              name="customerMode"
+              onChange={(event) => setCustomerMode(event.target.value as "existing" | "manual")}
+              value={customerMode}
+            >
               <option value="existing">Existing customer</option>
+              <option value="manual">Add manually</option>
             </select>
           </div>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
               <label className="form-label" htmlFor="voucherClient">Name</label>
-              <select
-                className="form-control"
-                id="voucherClient"
-                name="clientId"
-                onChange={(event) => {
-                  setClientId(event.target.value);
-                  setLinkedBillId("");
-                }}
-                required
-                value={clientId}
-              >
-                <option value="">Customer name</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>{client.displayName}</option>
-                ))}
-              </select>
+              {customerMode === "existing" ? (
+                <select
+                  className="form-control"
+                  id="voucherClient"
+                  name="clientId"
+                  onChange={(event) => {
+                    setClientId(event.target.value);
+                    setLinkedBillId("");
+                  }}
+                  required
+                  value={clientId}
+                >
+                  <option value="">Customer name</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>{client.displayName}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="form-control"
+                  id="manualVoucherName"
+                  name="manualName"
+                  maxLength={200}
+                  onChange={(event) => setManualName(event.target.value)}
+                  placeholder="Customer name"
+                  required
+                  value={manualName}
+                />
+              )}
               {state.fieldErrors?.clientId && <p className="form-hint form-hint-error">{state.fieldErrors.clientId}</p>}
             </div>
             <div>
               <label className="form-label" htmlFor="receiptCustomerAddress">Address</label>
-              <input className="form-control" id="receiptCustomerAddress" placeholder="Street, city" readOnly value={clientAddress} />
+              {customerMode === "existing" ? (
+                <input className="form-control" id="receiptCustomerAddress" placeholder="Street, city" readOnly value={clientAddress} />
+              ) : (
+                <input className="form-control" id="receiptCustomerAddress" name="manualAddress" maxLength={500} onChange={(event) => setManualAddress(event.target.value)} placeholder="Street, city" value={manualAddress} />
+              )}
             </div>
             <div>
               <label className="form-label" htmlFor="receiptCustomerCompany">Company name</label>
-              <input className="form-control" id="receiptCustomerCompany" placeholder="Company (optional)" readOnly value={selectedClient?.displayName ?? ""} />
+              {customerMode === "existing" ? (
+                <input className="form-control" id="receiptCustomerCompany" placeholder="Company (optional)" readOnly value={selectedClient?.displayName ?? ""} />
+              ) : (
+                <input className="form-control" id="receiptCustomerCompany" name="manualCompanyName" maxLength={200} onChange={(event) => setManualCompanyName(event.target.value)} placeholder="Company (optional)" value={manualCompanyName} />
+              )}
             </div>
             <div>
               <label className="form-label" htmlFor="receiptCustomerPhone">Contact number</label>
-              <input className="form-control" id="receiptCustomerPhone" placeholder="98XXXXXXXX" readOnly value={selectedClient?.phone ?? ""} />
+              {customerMode === "existing" ? (
+                <input className="form-control" id="receiptCustomerPhone" placeholder="98XXXXXXXX" readOnly value={selectedClient?.phone ?? ""} />
+              ) : (
+                <input className="form-control" id="receiptCustomerPhone" name="manualContact" maxLength={40} onChange={(event) => setManualContact(event.target.value)} placeholder="98XXXXXXXX" value={manualContact} />
+              )}
             </div>
             <div>
               <label className="form-label" htmlFor="receiptCustomerPan">PAN number</label>
-              <input className="form-control" id="receiptCustomerPan" placeholder="PAN (optional)" readOnly value={selectedClient?.panNumber ?? ""} />
+              {customerMode === "existing" ? (
+                <input className="form-control" id="receiptCustomerPan" placeholder="PAN (optional)" readOnly value={selectedClient?.panNumber ?? ""} />
+              ) : (
+                <input className="form-control" id="receiptCustomerPan" name="manualPan" maxLength={20} onChange={(event) => setManualPan(event.target.value)} placeholder="PAN (optional)" value={manualPan} />
+              )}
             </div>
             <div>
               <label className="form-label" htmlFor="receiptCustomerUserId">User ID</label>
@@ -368,23 +416,46 @@ export function VoucherForm({
             <h2 className="text-lg font-semibold text-primary" id="payment-customer-details">
               <span className="mr-3 text-text-secondary">01</span>Customer details
             </h2>
-            <select aria-label="Customer type" className="form-control w-auto min-w-44" defaultValue="existing">
+            <select
+              aria-label="Customer type"
+              className="form-control w-auto min-w-44"
+              name="customerMode"
+              onChange={(event) => setCustomerMode(event.target.value as "existing" | "manual")}
+              value={customerMode}
+            >
               <option value="existing">Existing customer</option>
+              <option value="manual">Add manually</option>
             </select>
           </div>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
               <label className="form-label" htmlFor="payeeName">Name</label>
-              <input
-                className="form-control"
-                id="payeeName"
-                maxLength={200}
-                name="payeeName"
-                onChange={(event) => setPayeeName(event.target.value)}
-                placeholder="Customer name"
-                required
-                value={payeeName}
-              />
+              {customerMode === "existing" ? (
+                <select
+                  className="form-control"
+                  id="payeeName"
+                  name="payeeName"
+                  onChange={(event) => setPayeeName(event.target.value)}
+                  required
+                  value={payeeName}
+                >
+                  <option value="">Customer name</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.displayName}>{client.displayName}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="form-control"
+                  id="payeeName"
+                  maxLength={200}
+                  name="payeeName"
+                  onChange={(event) => setPayeeName(event.target.value)}
+                  placeholder="Customer name"
+                  required
+                  value={payeeName}
+                />
+              )}
               {state.fieldErrors?.payeeName && <p className="form-hint form-hint-error">{state.fieldErrors.payeeName}</p>}
             </div>
             <div>

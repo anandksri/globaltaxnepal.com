@@ -100,7 +100,37 @@ async function buildBillData(
   status: BillStatus,
   allowedInactiveClientId?: string,
 ) {
-  const client = await getBillSnapshot(transaction, clientId);
+  let client = await getBillSnapshot(transaction, clientId);
+  if (parsed.customerMode === "manual") {
+    client = await transaction.client.create({
+      data: {
+        type: parsed.manualPan ? "BUSINESS" : "INDIVIDUAL",
+        displayName: parsed.manualName,
+        contactPerson: parsed.manualCompanyName || null,
+        phone: parsed.manualContact || null,
+        panNumber: parsed.manualPan || null,
+        streetAddress: parsed.manualAddress || null,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        displayName: true,
+        contactPerson: true,
+        email: true,
+        phone: true,
+        province: true,
+        district: true,
+        municipality: true,
+        wardNumber: true,
+        streetAddress: true,
+        address: true,
+        panNumber: true,
+        vatRegistered: true,
+        vatNumber: true,
+        isActive: true,
+      },
+    });
+  }
   if (!client || (!client.isActive && client.id !== allowedInactiveClientId)) {
     throw new Error("BILL_CLIENT_UNAVAILABLE");
   }

@@ -48,7 +48,7 @@ async function prepareDetailsBill(
   adminId: string,
   allowedInactiveClientId?: string,
 ) {
-  const client = await transaction.client.findUnique({
+  let client = await transaction.client.findUnique({
     where: { id: input.clientId },
     select: {
       id: true,
@@ -68,6 +68,19 @@ async function prepareDetailsBill(
       isActive: true,
     },
   });
+  if (input.customerMode === "manual") {
+    client = await transaction.client.create({
+      data: {
+        type: input.manualPan ? "BUSINESS" : "INDIVIDUAL",
+        displayName: input.manualName,
+        contactPerson: input.manualCompanyName || null,
+        phone: input.manualContact || null,
+        panNumber: input.manualPan || null,
+        streetAddress: input.manualAddress || null,
+        isActive: true,
+      },
+    });
+  }
   if (!client || (!client.isActive && client.id !== allowedInactiveClientId)) {
     throw new Error("DETAILS_CLIENT_UNAVAILABLE");
   }

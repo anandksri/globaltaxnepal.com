@@ -19,7 +19,13 @@ const billItemSchema = z.object({
 });
 
 export const billInputSchema = z.object({
-  clientId: z.string().trim().min(1, "Select a client."),
+  customerMode: z.enum(["existing", "manual"]).default("existing"),
+  clientId: z.string().trim().max(191),
+  manualName: z.string().trim().max(200),
+  manualCompanyName: z.string().trim().max(200),
+  manualContact: z.string().trim().max(40),
+  manualAddress: z.string().trim().max(500),
+  manualPan: z.string().trim().max(20),
   customBillNumber: z.string().trim().max(40, "Bill number must be 40 characters or fewer."),
   billDate: z.string().refine(isValidDate, "Enter a valid bill date."),
   dueDate: z.union([z.literal(""), z.string().refine(isValidDate, "Enter a valid due date.")]),
@@ -29,6 +35,12 @@ export const billInputSchema = z.object({
   notes: z.string().trim().max(5000, "Notes must be 5,000 characters or fewer."),
   items: z.array(billItemSchema).min(1, "Add at least one bill item.").max(100),
 }).superRefine((bill, context) => {
+  if (bill.customerMode === "existing" && !bill.clientId) {
+    context.addIssue({ code: "custom", path: ["clientId"], message: "Select a client." });
+  }
+  if (bill.customerMode === "manual" && !bill.manualName) {
+    context.addIssue({ code: "custom", path: ["manualName"], message: "Enter a customer name." });
+  }
   if (bill.dueDate && billDateIsLater(bill.billDate, bill.dueDate)) {
     context.addIssue({ code: "custom", path: ["dueDate"], message: "Due date cannot be before the bill date." });
   }
@@ -59,6 +71,12 @@ export function parseBillFormData(formData: FormData) {
   ) {
     return billInputSchema.safeParse({
       clientId: "",
+      customerMode: "existing",
+      manualName: "",
+      manualCompanyName: "",
+      manualContact: "",
+      manualAddress: "",
+      manualPan: "",
       customBillNumber: "",
       billDate: "",
       dueDate: "",
@@ -80,7 +98,13 @@ export function parseBillFormData(formData: FormData) {
   }
 
   return billInputSchema.safeParse({
+    customerMode: formData.get("customerMode") === "manual" ? "manual" : "existing",
     clientId: formData.get("clientId"),
+    manualName: formData.get("manualName") ?? "",
+    manualCompanyName: formData.get("manualCompanyName") ?? "",
+    manualContact: formData.get("manualContact") ?? "",
+    manualAddress: formData.get("manualAddress") ?? "",
+    manualPan: formData.get("manualPan") ?? "",
     customBillNumber: formData.get("customBillNumber") ?? "",
     billDate: formData.get("billDate"),
     dueDate: formData.get("dueDate") ?? "",

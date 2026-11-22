@@ -22,12 +22,26 @@ const commonSchema = z.object({
 });
 
 const receiptSchema = commonSchema.extend({
-  clientId: z.string().trim().min(1, "Select a client."),
+  customerMode: z.enum(["existing", "manual"]),
+  clientId: z.string().trim().max(191),
+  manualName: z.string().trim().max(200),
+  manualCompanyName: z.string().trim().max(200),
+  manualContact: z.string().trim().max(40),
+  manualAddress: z.string().trim().max(500),
+  manualPan: z.string().trim().max(20),
   customVoucherNumber: z.string().trim().max(40),
   description: z.string().trim().max(1000),
+}).superRefine((value, context) => {
+  if (value.customerMode === "existing" && !value.clientId) {
+    context.addIssue({ code: "custom", path: ["clientId"], message: "Select a client." });
+  }
+  if (value.customerMode === "manual" && !value.manualName) {
+    context.addIssue({ code: "custom", path: ["manualName"], message: "Enter a customer name." });
+  }
 });
 
 const paymentSchema = commonSchema.extend({
+  customerMode: z.enum(["existing", "manual"]),
   payeeName: z.string().trim().min(1, "Enter the payee name.").max(200),
   purpose: z.string().trim().max(1000),
   customVoucherNumber: z.string().trim().max(40),
@@ -44,11 +58,17 @@ function actionError(issues: { path: PropertyKey[]; message: string }[]): Billin
 
 function readForm(formData: FormData) {
   return {
+    customerMode: formData.get("customerMode") === "manual" ? "manual" : "existing",
     voucherDate: formData.get("voucherDate"),
     amount: formData.get("amount"),
     method: formData.get("method"),
     reference: formData.get("reference") ?? "",
     customVoucherNumber: formData.get("customVoucherNumber") ?? "",
+    manualName: formData.get("manualName") ?? "",
+    manualCompanyName: formData.get("manualCompanyName") ?? "",
+    manualContact: formData.get("manualContact") ?? "",
+    manualAddress: formData.get("manualAddress") ?? "",
+    manualPan: formData.get("manualPan") ?? "",
   };
 }
 
@@ -112,10 +132,23 @@ export async function createReceiptVoucher(
   let voucherId: string;
   try {
     const voucher = await prisma.$transaction(async (transaction) => {
-      const client = await transaction.client.findUnique({
-        where: { id: parsed.data.clientId },
-        select: { id: true, displayName: true, isActive: true },
-      });
+      const client = parsed.data.customerMode === "manual"
+        ? await transaction.client.create({
+            data: {
+              type: parsed.data.manualPan ? "BUSINESS" : "INDIVIDUAL",
+              displayName: parsed.data.manualName,
+              contactPerson: parsed.data.manualCompanyName || null,
+              phone: parsed.data.manualContact || null,
+              panNumber: parsed.data.manualPan || null,
+              streetAddress: parsed.data.manualAddress || null,
+              isActive: true,
+            },
+            select: { id: true, displayName: true, isActive: true },
+          })
+        : await transaction.client.findUnique({
+            where: { id: parsed.data.clientId },
+            select: { id: true, displayName: true, isActive: true },
+          });
       if (!client || !client.isActive) throw new Error("VOUCHER_CLIENT_UNAVAILABLE");
       const voucherDate = dateValue(parsed.data.voucherDate);
       const settings = await transaction.companySettings.findUnique({
@@ -200,10 +233,23 @@ export async function updateReceiptVoucher(
         },
       });
       if (!current) return "missing" as const;
-      const client = await transaction.client.findUnique({
-        where: { id: parsed.data.clientId },
-        select: { id: true, displayName: true, isActive: true },
-      });
+      const client = parsed.data.customerMode === "manual"
+        ? await transaction.client.create({
+            data: {
+              type: parsed.data.manualPan ? "BUSINESS" : "INDIVIDUAL",
+              displayName: parsed.data.manualName,
+              contactPerson: parsed.data.manualCompanyName || null,
+              phone: parsed.data.manualContact || null,
+              panNumber: parsed.data.manualPan || null,
+              streetAddress: parsed.data.manualAddress || null,
+              isActive: true,
+            },
+            select: { id: true, displayName: true, isActive: true },
+          })
+        : await transaction.client.findUnique({
+            where: { id: parsed.data.clientId },
+            select: { id: true, displayName: true, isActive: true },
+          });
       if (!client || (!client.isActive && client.id !== current.clientId)) return "client-unavailable" as const;
       const voucherDate = dateValue(parsed.data.voucherDate);
       const amount = amountValue(parsed.data.amount);
@@ -285,6 +331,15 @@ export async function createPaymentVoucher(
   try {
     const voucher = await prisma.$transaction(async (transaction) => {
       const voucherDate = dateValue(parsed.data.voucherDate);
+      if (parsed.data.customerMode === "manual") {
+        await transaction.client.create({
+          data: {
+            type: "INDIVIDUAL",
+            displayName: parsed.data.payeeName,
+            isActive: true,
+          },
+        });
+      }
       const settings = await transaction.companySettings.findUnique({
         where: { id: "company" },
         select: { currencyCode: true },

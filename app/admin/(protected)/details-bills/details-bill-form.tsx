@@ -56,6 +56,10 @@ export function DetailsBillForm({
   const [contact, setContact] = useState(initial?.contact ?? "");
   const [workDescription, setWorkDescription] = useState(initial?.workDescription ?? "");
   const [paymentStatus, setPaymentStatus] = useState(initial?.paymentStatus ?? "PENDING");
+  const [customerMode, setCustomerMode] = useState<"existing" | "manual">("existing");
+  const [manualAddress, setManualAddress] = useState("");
+  const [manualPan, setManualPan] = useState("");
+  const [manualName, setManualName] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   const selectedClient = clients.find((client) => client.id === clientId);
@@ -72,6 +76,10 @@ export function DetailsBillForm({
     setContact("");
     setWorkDescription("");
     setPaymentStatus("PENDING");
+    setCustomerMode("existing");
+    setManualAddress("");
+    setManualPan("");
+    setManualName("");
   }
 
   return (
@@ -140,32 +148,52 @@ export function DetailsBillForm({
           <h2 className="text-lg font-semibold text-primary" id="details-client-title">
             <span className="mr-3 text-text-secondary">02</span>Client and work details
           </h2>
-          <select aria-label="Customer type" className="form-control w-auto min-w-44" defaultValue="existing">
+          <select
+            aria-label="Customer type"
+            className="form-control w-auto min-w-44"
+            name="customerMode"
+            onChange={(event) => setCustomerMode(event.target.value as "existing" | "manual")}
+            value={customerMode}
+          >
             <option value="existing">Existing customer</option>
+            <option value="manual">Add manually</option>
           </select>
         </div>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
             <label className="form-label" htmlFor="clientId">Name <span className="text-error">*</span></label>
-            <select
-              className="form-control"
-              id="clientId"
-              name="clientId"
-              onChange={(event) => {
-                const id = event.target.value;
-                setClientId(id);
-                const client = clients.find((item) => item.id === id);
-                setCompanyName(client?.displayName ?? "");
-                setContact(client?.phone ?? client?.contactPerson ?? "");
-              }}
-              required
-              value={clientId}
-            >
-              <option value="">Client name</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>{client.displayName}</option>
-              ))}
-            </select>
+            {customerMode === "existing" ? (
+              <select
+                className="form-control"
+                id="clientId"
+                name="clientId"
+                onChange={(event) => {
+                  const id = event.target.value;
+                  setClientId(id);
+                  const client = clients.find((item) => item.id === id);
+                  setCompanyName(client?.displayName ?? "");
+                  setContact(client?.phone ?? client?.contactPerson ?? "");
+                }}
+                required
+                value={clientId}
+              >
+                <option value="">Client name</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>{client.displayName}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                className="form-control"
+                id="manualName"
+                name="manualName"
+                maxLength={200}
+                onChange={(event) => setManualName(event.target.value)}
+                placeholder="Client name"
+                required
+                value={manualName}
+              />
+            )}
             {state.fieldErrors?.clientId && <p className="form-hint form-hint-error">{state.fieldErrors.clientId}</p>}
           </div>
           <div>
@@ -174,7 +202,7 @@ export function DetailsBillForm({
               className="form-control"
               id="companyName"
               maxLength={200}
-              name="companyName"
+              name={customerMode === "manual" ? "manualCompanyName" : "companyName"}
               onChange={(event) => setCompanyName(event.target.value)}
               placeholder="Company name"
               value={companyName}
@@ -190,7 +218,7 @@ export function DetailsBillForm({
               className="form-control"
               id="detailsContact"
               maxLength={40}
-              name="contact"
+              name={customerMode === "manual" ? "manualContact" : "contact"}
               onChange={(event) => setContact(event.target.value)}
               placeholder="Contact number"
               value={contact}
@@ -257,6 +285,8 @@ export function DetailsBillForm({
       <input name="vatRate" type="hidden" value="0.00" />
       <input name="dueDate" type="hidden" value="" />
       <input name="notes" type="hidden" value="" />
+      <input name="manualAddress" type="hidden" value="" />
+      <input name="manualPan" type="hidden" value="" />
 
       <div className="flex flex-wrap items-center gap-3">
         <button className="button button-primary" disabled={pending} name="intent" type="submit" value="issue">

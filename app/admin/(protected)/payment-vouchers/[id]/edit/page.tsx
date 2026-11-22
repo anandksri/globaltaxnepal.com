@@ -6,6 +6,7 @@ import { updatePaymentVoucher } from "../../../vouchers/actions";
 import { VoucherForm } from "../../../vouchers/voucher-form";
 import { getPaymentVoucher } from "@/lib/admin/vouchers";
 import { requirePermission } from "@/lib/admin/auth";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = { title: "Edit payment voucher" };
 export const dynamic = "force-dynamic";
@@ -21,6 +22,23 @@ export default async function EditPaymentVoucherPage({
   if (!validId.success) notFound();
   const voucher = await getPaymentVoucher(validId.data);
   if (!voucher) notFound();
+  const clients = await prisma.client.findMany({
+    where: { isActive: true },
+    orderBy: { displayName: "asc" },
+    select: {
+      id: true,
+      displayName: true,
+      contactPerson: true,
+      phone: true,
+      panNumber: true,
+      province: true,
+      district: true,
+      municipality: true,
+      wardNumber: true,
+      streetAddress: true,
+      address: true,
+    },
+  });
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <Link className="text-sm font-medium text-secondary hover:text-primary" href={`/admin/payment-vouchers/${voucher.id}`}>← Voucher {voucher.voucherNumber}</Link>
@@ -28,6 +46,7 @@ export default async function EditPaymentVoucherPage({
         <p className="mb-5 text-sm text-text-secondary">Voucher number: <strong className="text-primary">{voucher.voucherNumber}</strong></p>
         <VoucherForm
           action={updatePaymentVoucher.bind(null, voucher.id)}
+          clients={clients}
           currencyCode={voucher.currencyCode}
           initial={{
             voucherDate: voucher.voucherDate.toISOString().slice(0, 10),
