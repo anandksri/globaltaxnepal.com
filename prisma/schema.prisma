@@ -279,6 +279,9 @@ model Bill {
   vatAmount       Decimal    @default(0) @db.Decimal(14, 2)
   totalAmount     Decimal    @db.Decimal(14, 2)
   notes           String?    @db.Text
+  workDescription String?    @db.Text
+  accountPassword String?    @db.Text
+  paymentStatus   String     @default("PENDING") @db.VarChar(20)
   createdById     String
   createdBy       User       @relation("BillCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   issuedAt        DateTime?

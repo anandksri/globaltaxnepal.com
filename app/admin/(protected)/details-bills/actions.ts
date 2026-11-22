@@ -8,6 +8,7 @@ import { calculateBill, formatCents, parseBillFormData, type BillInput } from "@
 import type { BillingActionState } from "@/app/admin/(protected)/billing/actions";
 import { requirePermission } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
+import { encryptSensitiveText } from "@/lib/admin/sensitive-data";
 
 function fieldErrors(issues: { path: PropertyKey[]; message: string }[]) {
   const errors: Record<string, string> = {};
@@ -159,17 +160,26 @@ export async function createDetailsBill(
   const admin = await requirePermission("BILLING", "CREATE");
   const input = parseInput(formData);
   if (!input.data) return input;
-  const status = formData.get("intent") === "issue" ? BillStatus.ISSUED : BillStatus.DRAFT;
+  const paymentStatus = formData.get("paymentStatus") === "PAID" ? "PAID" : "PENDING";
+  const status = paymentStatus === "PAID" ? BillStatus.PAID : BillStatus.DRAFT;
+  const workDescription = (formData.get("workDescription") ?? "").toString().trim();
+  const accountPassword = encryptSensitiveText((formData.get("accountPassword") ?? "").toString());
   try {
     const bill = await prisma.$transaction(async (transaction) => {
       const prepared = await prepareDetailsBill(transaction, input.data, admin.id);
-      const billNumber = await nextDetailsBillNumber(transaction, prepared.billDate);
+      const customBillNumber = input.data.customBillNumber;
+      const billNumber = customBillNumber
+        ? customBillNumber
+        : await nextDetailsBillNumber(transaction, prepared.billDate);
       const created = await transaction.bill.create({
         data: {
           ...prepared.data,
+          workDescription: workDescription || null,
+          accountPassword,
+          paymentStatus,
           billNumber,
           status,
-          issuedAt: status === BillStatus.ISSUED ? new Date() : null,
+          issuedAt: status === BillStatus.PAID ? new Date() : null,
           items: { create: prepared.items },
         },
         select: { id: true, billNumber: true },
@@ -177,7 +187,7 @@ export async function createDetailsBill(
       await transaction.activityLog.create({
         data: {
           actorId: admin.id,
-          action: status === BillStatus.ISSUED ? "DETAILS_BILL_ISSUED" : "DETAILS_BILL_DRAFT_CREATED",
+          action: status === BillStatus.PAID ? "DETAILS_BILL_PAID" : "DETAILS_BILL_DRAFT_CREATED",
           targetType: "Bill",
           targetId: created.id,
           metadata: { billNumber: created.billNumber, totalAmount: prepared.totals.totalAmount.toString() },
@@ -206,7 +216,10 @@ export async function updateDetailsBill(
   if (!id.success) return { error: "This bill could not be found." };
   const input = parseInput(formData);
   if (!input.data) return input;
-  const issue = formData.get("intent") === "issue";
+  const paymentStatus = formData.get("paymentStatus") === "PAID" ? "PAID" : "PENDING";
+  const issue = paymentStatus === "PAID";
+  const workDescription = (formData.get("workDescription") ?? "").toString().trim();
+  const accountPassword = encryptSensitiveText((formData.get("accountPassword") ?? "").toString());
   try {
     const result = await prisma.$transaction(async (transaction) => {
       const current = await transaction.bill.findUnique({
@@ -221,7 +234,11 @@ export async function updateDetailsBill(
         where: { id: id.data },
         data: {
           ...changes,
-          status: issue ? BillStatus.ISSUED : BillStatus.DRAFT,
+          billNumber: input.data.customBillNumber || current.billNumber,
+          workDescription: workDescription || null,
+          accountPassword,
+          paymentStatus,
+          status: issue ? BillStatus.PAID : BillStatus.DRAFT,
           issuedAt: issue ? new Date() : null,
           items: { deleteMany: {}, create: prepared.items },
         },

@@ -3,10 +3,11 @@ import Link from "next/link";
 import { BillStatus } from "@prisma/client";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
-import { BillForm } from "@/app/admin/(protected)/billing/bill-form";
 import { updateDetailsBill } from "../../actions";
+import { DetailsBillForm } from "../../details-bill-form";
 import { getDetailsBillForEdit } from "@/lib/admin/details-bills";
 import { requirePermission } from "@/lib/admin/auth";
+import { decryptSensitiveText } from "@/lib/admin/sensitive-data";
 
 export const metadata: Metadata = { title: "Edit details bill" };
 export const dynamic = "force-dynamic";
@@ -30,25 +31,18 @@ export default async function EditDetailsBillPage({
         ← Bill {data.bill.billNumber}
       </Link>
       <section className="border border-border bg-surface p-5 sm:p-7">
-        <BillForm
+        <DetailsBillForm
           action={updateDetailsBill.bind(null, data.bill.id)}
           billNumber={data.bill.billNumber}
           clients={data.clients}
-          currencyCode={data.bill.currencyCode}
           initial={{
             clientId: data.bill.clientId,
             billDate: data.bill.billDate.toISOString().slice(0, 10),
-            dueDate: data.bill.dueDate?.toISOString().slice(0, 10) ?? "",
-            discount: data.bill.discount.toFixed(2),
-            vatApplied: data.bill.vatApplied,
-            vatRate: data.bill.vatRate.toFixed(2),
-            notes: data.bill.notes ?? "",
-            items: data.bill.items.map((item) => ({
-              description: item.description,
-              quantity: item.quantity.toString(),
-              unit: item.unit,
-              rate: item.rate.toFixed(2),
-            })),
+            companyName: data.bill.clientName,
+            contact: data.bill.clientPhone ?? data.bill.contactPerson ?? "",
+            accountPassword: decryptSensitiveText(data.bill.accountPassword),
+            workDescription: data.bill.workDescription ?? data.bill.notes ?? "",
+            paymentStatus: data.bill.paymentStatus === "PAID" ? "PAID" : "PENDING",
           }}
           today={new Date().toISOString().slice(0, 10)}
         />

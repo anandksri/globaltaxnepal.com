@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createDetailsBill } from "../actions";
-import { BillForm } from "@/app/admin/(protected)/billing/bill-form";
+import { DetailsBillForm } from "../details-bill-form";
 import { requirePermission } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -10,11 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default async function NewDetailsBillPage() {
   await requirePermission("BILLING", "CREATE");
-  const [clients, settings] = await prisma.$transaction([
-    prisma.client.findMany({
-      where: { isActive: true },
-      orderBy: { displayName: "asc" },
-      select: {
+  const clients = await prisma.client.findMany({
+    where: { isActive: true },
+    orderBy: { displayName: "asc" },
+    select: {
         id: true,
         displayName: true,
         contactPerson: true,
@@ -29,10 +28,8 @@ export default async function NewDetailsBillPage() {
         wardNumber: true,
         streetAddress: true,
         address: true,
-      },
-    }),
-    prisma.companySettings.findUnique({ where: { id: "company" }, select: { currencyCode: true } }),
-  ]);
+    },
+  });
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <Link className="text-sm font-medium text-secondary hover:text-primary" href="/admin/details-bills">← All details bills</Link>
@@ -44,10 +41,9 @@ export default async function NewDetailsBillPage() {
         </section>
       ) : (
         <section className="border border-border bg-surface p-5 sm:p-7">
-          <BillForm
+          <DetailsBillForm
             action={createDetailsBill}
             clients={clients}
-            currencyCode={settings?.currencyCode ?? "NPR"}
             today={new Date().toISOString().slice(0, 10)}
           />
         </section>
