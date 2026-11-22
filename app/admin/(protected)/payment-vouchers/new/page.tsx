@@ -15,7 +15,7 @@ export default async function NewPaymentVoucherPage() {
     select: { currencyCode: true },
   });
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <div className="mx-auto max-w-6xl space-y-5">
       <Link className="text-sm font-medium text-secondary hover:text-primary" href="/admin/payment-vouchers">← All payment vouchers</Link>
       <section className="border border-border bg-surface p-5 sm:p-7">
         <VoucherForm action={createPaymentVoucher} currencyCode={settings?.currencyCode ?? "NPR"} kind="payment" />

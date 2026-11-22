@@ -34,6 +34,7 @@ export default async function EditPaymentVoucherPage({
             amount: voucher.amount.toFixed(2),
             method: voucher.method,
             reference: voucher.reference ?? "",
+            voucherNumber: voucher.voucherNumber,
             payeeName: voucher.payeeName,
             purpose: voucher.purpose,
           }}

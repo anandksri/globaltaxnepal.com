@@ -29,7 +29,8 @@ const receiptSchema = commonSchema.extend({
 
 const paymentSchema = commonSchema.extend({
   payeeName: z.string().trim().min(1, "Enter the payee name.").max(200),
-  purpose: z.string().trim().min(1, "Enter the payment purpose.").max(1000),
+  purpose: z.string().trim().max(1000),
+  customVoucherNumber: z.string().trim().max(40),
 });
 
 function actionError(issues: { path: PropertyKey[]; message: string }[]): BillingActionState {
@@ -288,7 +289,9 @@ export async function createPaymentVoucher(
         where: { id: "company" },
         select: { currencyCode: true },
       });
-      const voucherNumber = await nextVoucherNumber(transaction, VoucherType.PAYMENT, voucherDate);
+      const voucherNumber = parsed.data.customVoucherNumber
+        ? parsed.data.customVoucherNumber
+        : await nextVoucherNumber(transaction, VoucherType.PAYMENT, voucherDate);
       const created = await transaction.paymentVoucher.create({
         data: {
           voucherNumber,
@@ -351,6 +354,7 @@ export async function updatePaymentVoucher(
       await transaction.paymentVoucher.update({
         where: { id: id.data },
         data: {
+          voucherNumber: parsed.data.customVoucherNumber || current.voucherNumber,
           voucherDate,
           payeeName: parsed.data.payeeName,
           purpose: parsed.data.purpose,
