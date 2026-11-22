@@ -20,6 +20,7 @@ const billItemSchema = z.object({
 
 export const billInputSchema = z.object({
   clientId: z.string().trim().min(1, "Select a client."),
+  customBillNumber: z.string().trim().max(40, "Bill number must be 40 characters or fewer."),
   billDate: z.string().refine(isValidDate, "Enter a valid bill date."),
   dueDate: z.union([z.literal(""), z.string().refine(isValidDate, "Enter a valid due date.")]),
   discount: z.string().trim().regex(moneyPattern, "Enter a valid discount."),
@@ -58,6 +59,7 @@ export function parseBillFormData(formData: FormData) {
   ) {
     return billInputSchema.safeParse({
       clientId: "",
+      customBillNumber: "",
       billDate: "",
       dueDate: "",
       discount: "",
@@ -79,6 +81,7 @@ export function parseBillFormData(formData: FormData) {
 
   return billInputSchema.safeParse({
     clientId: formData.get("clientId"),
+    customBillNumber: formData.get("customBillNumber") ?? "",
     billDate: formData.get("billDate"),
     dueDate: formData.get("dueDate") ?? "",
     discount: formData.get("discount") ?? "0",

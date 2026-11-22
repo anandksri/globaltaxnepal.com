@@ -214,7 +214,10 @@ export async function createBill(
         admin.id,
         intent,
       );
-      const billNumber = await nextBillNumber(transaction, prepared.date);
+      const customBillNumber = input.data.customBillNumber;
+      const billNumber = customBillNumber
+        ? customBillNumber
+        : await nextBillNumber(transaction, prepared.date);
       const created = await transaction.bill.create({
         data: {
           ...prepared.data,
@@ -286,6 +289,7 @@ export async function updateDraftBill(
         where: { id: validId.data },
         data: {
           ...updateData,
+          billNumber: input.data.customBillNumber || current.billNumber,
           issuedAt: intent ? new Date() : null,
           items: { deleteMany: {}, create: prepared.items },
         },

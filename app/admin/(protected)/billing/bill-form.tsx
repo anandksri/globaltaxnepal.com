@@ -1,9 +1,8 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useActionState, useMemo, useRef, useState } from "react";
+import { Plus, Printer, RotateCcw, Save, Trash2 } from "lucide-react";
 import {
-  amountInWords,
   calculateBill,
   formatCurrency,
   type BillInput,
@@ -53,8 +52,8 @@ type BillFormProps = {
 
 const blankItem: BillItemValue = {
   description: "",
-  quantity: "1",
-  unit: "service",
+  quantity: "0",
+  unit: "year",
   rate: "0.00",
 };
 
@@ -68,10 +67,16 @@ export function BillForm({
 }: BillFormProps) {
   const [state, formAction, isPending] = useActionState(action, {});
   const [clientId, setClientId] = useState(initial?.clientId ?? "");
-  const [items, setItems] = useState<BillItemValue[]>(initial?.items ?? [{ ...blankItem }]);
-  const [discount, setDiscount] = useState(initial?.discount ?? "0.00");
-  const [vatApplied, setVatApplied] = useState(initial?.vatApplied ?? false);
-  const [vatRate, setVatRate] = useState(initial?.vatRate ?? "0.00");
+  const [items, setItems] = useState<BillItemValue[]>(
+    initial?.items ?? [{ ...blankItem }, { ...blankItem }, { ...blankItem }],
+  );
+  const [discount] = useState(initial?.discount ?? "0.00");
+  const [vatApplied] = useState(initial?.vatApplied ?? false);
+  const [vatRate] = useState(initial?.vatRate ?? "0.00");
+  const [useCustomNumber, setUseCustomNumber] = useState(Boolean(initial?.clientId && billNumber));
+  const [customBillNumber, setCustomBillNumber] = useState(billNumber ?? "");
+  const formRef = useRef<HTMLFormElement>(null);
+
   const selectedClient = clients.find((client) => client.id === clientId);
   const clientAddress = selectedClient
     ? [
@@ -88,12 +93,8 @@ export function BillForm({
       !items.every((item) =>
         /^\d{1,9}(?:\.\d{1,3})?$/.test(item.quantity) &&
         /^\d{1,12}(?:\.\d{1,2})?$/.test(item.rate),
-      ) ||
-      !/^\d{1,12}(?:\.\d{1,2})?$/.test(discount) ||
-      !/^\d{1,3}(?:\.\d{1,2})?$/.test(vatRate)
-    ) {
-      return null;
-    }
+      )
+    ) return null;
     try {
       return calculateBill({
         items,
@@ -101,9 +102,8 @@ export function BillForm({
         vatApplied,
         vatRate,
       });
-    } catch (error) {
-      if (error instanceof RangeError) return null;
-      throw error;
+    } catch {
+      return null;
     }
   }, [items, discount, vatApplied, vatRate]);
 
@@ -113,44 +113,36 @@ export function BillForm({
     ));
   }
 
+  function clearForm() {
+    formRef.current?.reset();
+    setClientId("");
+    setItems([{ ...blankItem }, { ...blankItem }, { ...blankItem }]);
+    setUseCustomNumber(false);
+    setCustomBillNumber("");
+  }
+
   return (
-    <form action={formAction} className="space-y-7">
-      <p className="text-sm text-text-secondary">
-        Bill number: <span className="font-medium text-primary">{billNumber ?? "Automatically assigned when saved"}</span>
-      </p>
+    <form action={formAction} className="space-y-7" ref={formRef}>
       {state.error && (
         <p className="rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error" role="alert">
           {state.error}
         </p>
       )}
       {Object.entries(state.fieldErrors ?? {}).map(([field, message]) => (
-        <p className="text-sm text-error" key={field} role="status">
-          {field === "items" ? message : `${field}: ${message}`}
+        <p className="text-sm text-error" key={field}>
+          {field}: {message}
         </p>
       ))}
 
-      <section aria-labelledby="bill-information-title" className="border-b border-border pb-7">
-        <h2 className="text-lg font-semibold text-primary" id="bill-information-title">Bill information</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="rounded-lg border border-border bg-surface p-5 sm:p-6" aria-labelledby="document-details-title">
+        <h2 className="text-lg font-semibold text-primary" id="document-details-title">
+          <span className="mr-3 text-text-secondary">01</span>Document details
+        </h2>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="form-label" htmlFor="clientId">Client</label>
-            <select
-              className="form-control"
-              id="clientId"
-              name="clientId"
-              onChange={(event) => setClientId(event.target.value)}
-              required
-              value={clientId}
-            >
-              <option value="">Select an active client</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>{client.displayName}</option>
-              ))}
-            </select>
-            {state.fieldErrors?.clientId && <p className="form-hint form-hint-error">{state.fieldErrors.clientId}</p>}
-          </div>
-          <div>
-            <label className="form-label" htmlFor="billDate">Bill date</label>
+            <label className="form-label" htmlFor="billDate">
+              Date (B.S.) <span className="text-error">*</span>
+            </label>
             <input
               className="form-control"
               defaultValue={initial?.billDate ?? today}
@@ -160,158 +152,202 @@ export function BillForm({
               required
               type="date"
             />
-            {state.fieldErrors?.billDate && <p className="form-hint form-hint-error">{state.fieldErrors.billDate}</p>}
+            <p className="form-hint">Enter the date in Nepali calendar format (YYYY/MM/DD).</p>
           </div>
           <div>
-            <label className="form-label" htmlFor="dueDate">Due date <span className="font-normal text-text-secondary">(optional)</span></label>
-            <input className="form-control" defaultValue={initial?.dueDate} id="dueDate" name="dueDate" type="date" />
-            {state.fieldErrors?.dueDate && <p className="form-hint form-hint-error">{state.fieldErrors.dueDate}</p>}
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <label className="form-label mb-0" htmlFor="customBillNumber">Bill number</label>
+              {billNumber && <span className="text-xs text-text-secondary">{billNumber}</span>}
+            </div>
+            {useCustomNumber ? (
+              <input
+                className="form-control"
+                id="customBillNumber"
+                maxLength={40}
+                name="customBillNumber"
+                onChange={(event) => setCustomBillNumber(event.target.value)}
+                required
+                value={customBillNumber}
+              />
+            ) : (
+              <>
+                <input
+                  className="form-control bg-background text-text-secondary"
+                  readOnly
+                  value={billNumber ?? "Automatically assigned"}
+                />
+                <input name="customBillNumber" type="hidden" value="" />
+              </>
+            )}
+            <label className="mt-2 flex items-center gap-2 text-xs text-text-secondary">
+              <input
+                checked={useCustomNumber}
+                onChange={(event) => setUseCustomNumber(event.target.checked)}
+                type="checkbox"
+              />
+              Use a custom bill number
+            </label>
           </div>
         </div>
-        {selectedClient && (
-          <div className="mt-4 border-l-2 border-secondary pl-3 text-sm text-text-secondary" aria-live="polite">
-            <p className="font-medium text-text">{selectedClient.displayName}</p>
-            {selectedClient.contactPerson && <p>Contact: {selectedClient.contactPerson}</p>}
-            <p>{[selectedClient.phone, selectedClient.email, selectedClient.panNumber ? `PAN ${selectedClient.panNumber}` : null].filter(Boolean).join(" · ") || "No contact or PAN details on file."}</p>
-            {clientAddress && <p>{clientAddress}</p>}
-            <p>{selectedClient.vatRegistered ? `VAT registered${selectedClient.vatNumber ? ` · ${selectedClient.vatNumber}` : ""}` : "Not VAT registered"}</p>
-          </div>
-        )}
       </section>
 
-      <section aria-labelledby="bill-items-title" className="border-b border-border pb-7">
-        <div className="flex items-center justify-between gap-3">
+      <section className="rounded-lg border border-border bg-surface p-5 sm:p-6" aria-labelledby="customer-details-title">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-lg font-semibold text-primary" id="customer-details-title">
+            <span className="mr-3 text-text-secondary">01</span>Customer details
+          </h2>
+          <select aria-label="Customer type" className="form-control w-auto min-w-44" defaultValue="existing">
+            <option value="existing">Existing customer</option>
+          </select>
+        </div>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
-            <h2 className="text-lg font-semibold text-primary" id="bill-items-title">Services</h2>
-            <p className="text-sm text-text-secondary">Enter quantities and rates; line amounts are calculated automatically.</p>
+            <label className="form-label" htmlFor="clientId">Name</label>
+            <select
+              className="form-control"
+              id="clientId"
+              name="clientId"
+              onChange={(event) => setClientId(event.target.value)}
+              required
+              value={clientId}
+            >
+              <option value="">Customer name</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>{client.displayName}</option>
+              ))}
+            </select>
+            {state.fieldErrors?.clientId && <p className="form-hint form-hint-error">{state.fieldErrors.clientId}</p>}
           </div>
+          <div>
+            <label className="form-label" htmlFor="customerAddress">Address</label>
+            <input className="form-control" id="customerAddress" placeholder="Street, city" readOnly value={clientAddress} />
+          </div>
+          <div>
+            <label className="form-label" htmlFor="customerCompany">Company name</label>
+            <input className="form-control" id="customerCompany" placeholder="Company (optional)" readOnly value={selectedClient?.displayName ?? ""} />
+          </div>
+          <div>
+            <label className="form-label" htmlFor="customerPhone">Contact number</label>
+            <input className="form-control" id="customerPhone" placeholder="98XXXXXXXX" readOnly value={selectedClient?.phone ?? ""} />
+          </div>
+          <div>
+            <label className="form-label" htmlFor="customerPan">PAN number</label>
+            <input className="form-control" id="customerPan" placeholder="PAN (optional)" readOnly value={selectedClient?.panNumber ?? ""} />
+          </div>
+          <div>
+            <label className="form-label" htmlFor="customerUserId">User ID</label>
+            <input className="form-control" id="customerUserId" placeholder="User ID (optional)" readOnly value={clientId} />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-border bg-surface p-5 sm:p-6" aria-labelledby="bill-items-title">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-primary" id="bill-items-title">
+            <span className="mr-3 text-text-secondary">02</span>Bill items
+          </h2>
           <button
-            className="button button-secondary min-h-10 shrink-0 px-3 text-sm"
+            className="flex min-h-10 items-center gap-1 px-2 text-sm font-medium text-secondary"
             onClick={() => setItems((current) => [...current, { ...blankItem }])}
             type="button"
           >
-            <Plus aria-hidden="true" className="size-4" strokeWidth={1.75} />
-            Add item
+            <Plus aria-hidden="true" className="size-4" />
+            Add row
           </button>
         </div>
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 overflow-x-auto">
+          <div className="grid min-w-[48rem] grid-cols-[3rem_minmax(16rem,1fr)_7rem_8rem_9rem_2.5rem] items-center gap-2 border-b border-border pb-2 text-xs font-medium text-text-secondary">
+            <span>SN</span>
+            <span>Particular</span>
+            <span>Years</span>
+            <span>Rate</span>
+            <span className="text-right">Amount</span>
+            <span />
+          </div>
           {items.map((item, index) => {
-            let amount: bigint | null = null;
-            if (/^\d{1,9}(?:\.\d{1,3})?$/.test(item.quantity) && /^\d{1,12}(?:\.\d{1,2})?$/.test(item.rate)) {
-              amount = calculateBill({
-                items: [item],
-                discount: "0",
-                vatApplied: false,
-                vatRate: "0",
-              }).itemAmounts[0].amount;
-            }
+            const amount = /^\d{1,9}(?:\.\d{1,3})?$/.test(item.quantity) &&
+              /^\d{1,12}(?:\.\d{1,2})?$/.test(item.rate)
+              ? calculateBill({ items: [item], discount: "0", vatApplied: false, vatRate: "0" }).itemAmounts[0].amount
+              : null;
             return (
-              <fieldset className="grid gap-3 border-b border-border pb-4 last:border-b-0 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,2fr)_minmax(6rem,0.7fr)_minmax(6rem,0.8fr)_minmax(8rem,1fr)_minmax(8rem,1fr)_auto]" key={index}>
-                <legend className="sr-only">Service item {index + 1}</legend>
-                <div>
-                  <label className="form-label" htmlFor={`description-${index}`}>Service description</label>
-                  <input className="form-control" id={`description-${index}`} maxLength={500} name="itemDescription" onChange={(event) => updateItem(index, "description", event.target.value)} required value={item.description} />
-                </div>
-                <div>
-                  <label className="form-label" htmlFor={`quantity-${index}`}>Quantity</label>
-                  <input className="form-control" id={`quantity-${index}`} min="0.001" name="itemQuantity" onChange={(event) => updateItem(index, "quantity", event.target.value)} required step="0.001" type="number" value={item.quantity} />
-                </div>
-                <div>
-                  <label className="form-label" htmlFor={`unit-${index}`}>Unit</label>
-                  <input className="form-control" id={`unit-${index}`} maxLength={30} name="itemUnit" onChange={(event) => updateItem(index, "unit", event.target.value)} required value={item.unit} />
-                </div>
-                <div>
-                  <label className="form-label" htmlFor={`rate-${index}`}>Rate ({currencyCode})</label>
-                  <input className="form-control" id={`rate-${index}`} min="0" name="itemRate" onChange={(event) => updateItem(index, "rate", event.target.value)} required step="0.01" type="number" value={item.rate} />
-                </div>
-                <div>
-                  <span className="form-label">Amount</span>
-                  <p className="flex min-h-11 items-center text-sm font-medium text-text" aria-live="polite">
-                    {amount === null ? "—" : formatCurrency(amount, currencyCode)}
-                  </p>
-                </div>
-                <div className="flex items-end">
-                  <button
-                    aria-label={`Remove service item ${index + 1}`}
-                    className="mb-1 inline-flex size-10 items-center justify-center rounded-sm border border-border text-text-secondary hover:border-error hover:text-error"
-                    onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))}
-                    type="button"
-                  >
-                    <Trash2 aria-hidden="true" className="size-4" strokeWidth={1.75} />
-                  </button>
-                </div>
-              </fieldset>
+              <div className="grid min-w-[48rem] grid-cols-[3rem_minmax(16rem,1fr)_7rem_8rem_9rem_2.5rem] items-center gap-2 border-b border-border py-2" key={index}>
+                <span className="px-1 text-sm text-text-secondary">{index + 1}</span>
+                <input
+                  aria-label={`Particular ${index + 1}`}
+                  className="form-control"
+                  maxLength={500}
+                  name="itemDescription"
+                  onChange={(event) => updateItem(index, "description", event.target.value)}
+                  placeholder="Service or item"
+                  required
+                  value={item.description}
+                />
+                <input
+                  aria-label={`Years ${index + 1}`}
+                  className="form-control"
+                  min="0"
+                  name="itemQuantity"
+                  onChange={(event) => updateItem(index, "quantity", event.target.value)}
+                  required
+                  step="0.001"
+                  type="number"
+                  value={item.quantity}
+                />
+                <input
+                  aria-label={`Rate ${index + 1}`}
+                  className="form-control"
+                  min="0"
+                  name="itemRate"
+                  onChange={(event) => updateItem(index, "rate", event.target.value)}
+                  required
+                  step="0.01"
+                  type="number"
+                  value={item.rate}
+                />
+                <p className="text-right text-sm font-medium text-text">
+                  {amount === null ? `${currencyCode} 0.00` : formatCurrency(amount, currencyCode)}
+                </p>
+                <button
+                  aria-label={`Remove bill item ${index + 1}`}
+                  className="inline-flex size-9 items-center justify-center text-text-secondary hover:text-error"
+                  onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                  type="button"
+                >
+                  <Trash2 aria-hidden="true" className="size-4" />
+                </button>
+                <input name="itemUnit" type="hidden" value="year" />
+              </div>
             );
           })}
         </div>
-      </section>
-
-      <section aria-labelledby="bill-totals-title" className="grid gap-7 lg:grid-cols-[minmax(0,1.3fr)_minmax(18rem,0.7fr)]">
-        <div>
-          <h2 className="text-lg font-semibold text-primary" id="bill-totals-title">Tax and notes</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="form-label" htmlFor="discount">Discount ({currencyCode})</label>
-              <input className="form-control" id="discount" min="0" name="discount" onChange={(event) => setDiscount(event.target.value)} step="0.01" type="number" value={discount} />
-              {state.fieldErrors?.discount && <p className="form-hint form-hint-error">{state.fieldErrors.discount}</p>}
-            </div>
-            <div>
-              <label className="form-label" htmlFor="vatRate">VAT rate (%)</label>
-              <input
-                className="form-control"
-                disabled={!selectedClient?.vatRegistered || !vatApplied}
-                id="vatRate"
-                max="100"
-                min="0.01"
-                name="vatRate"
-                onChange={(event) => setVatRate(event.target.value)}
-                step="0.01"
-                type="number"
-                value={vatRate}
-              />
-              {state.fieldErrors?.vatRate && <p className="form-hint form-hint-error">{state.fieldErrors.vatRate}</p>}
-            </div>
-            <label className={`flex min-h-11 items-center gap-2 text-sm ${selectedClient?.vatRegistered ? "text-text" : "text-text-secondary"}`}>
-              <input
-                checked={vatApplied}
-                disabled={!selectedClient?.vatRegistered}
-                name="vatApplied"
-                onChange={(event) => setVatApplied(event.target.checked)}
-                type="checkbox"
-              />
-              Apply VAT to this bill
-            </label>
-            {!selectedClient?.vatRegistered && (
-              <p className="self-center text-xs text-text-secondary">VAT is unavailable unless the selected client is VAT-registered.</p>
-            )}
-            <div className="sm:col-span-2">
-              <label className="form-label" htmlFor="notes">Notes <span className="font-normal text-text-secondary">(optional)</span></label>
-              <textarea className="form-control min-h-24" id="notes" maxLength={5000} name="notes" defaultValue={initial?.notes} />
-            </div>
+        <div className="mt-5 flex justify-end">
+          <div className="flex w-full max-w-xs items-center justify-between gap-4 text-base">
+            <span className="text-text-secondary">Grand total</span>
+            <strong className="text-primary">
+              {totals ? formatCurrency(totals.totalAmount, currencyCode) : `${currencyCode} 0.00`}
+            </strong>
           </div>
         </div>
-        <div className="border-t border-border pt-4 lg:ml-auto lg:w-full lg:max-w-sm">
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between gap-4"><dt className="text-text-secondary">Subtotal</dt><dd>{totals ? formatCurrency(totals.subtotal, currencyCode) : "—"}</dd></div>
-            <div className="flex justify-between gap-4"><dt className="text-text-secondary">Discount</dt><dd>{totals ? formatCurrency(totals.discount, currencyCode) : "—"}</dd></div>
-            <div className="flex justify-between gap-4"><dt className="text-text-secondary">Taxable amount</dt><dd>{totals ? formatCurrency(totals.taxableAmount, currencyCode) : "—"}</dd></div>
-            <div className="flex justify-between gap-4"><dt className="text-text-secondary">VAT {vatApplied ? `(${vatRate || "0"}%)` : "(not applied)"}</dt><dd>{totals ? formatCurrency(totals.vatAmount, currencyCode) : "—"}</dd></div>
-            <div className="flex justify-between gap-4 border-t border-border pt-3 text-base font-semibold text-primary"><dt>Total</dt><dd>{totals ? formatCurrency(totals.totalAmount, currencyCode) : "—"}</dd></div>
-          </dl>
-          {totals && (
-            <p className="mt-3 text-xs text-text-secondary">
-              {amountInWords(totals.totalAmount)}
-            </p>
-          )}
-        </div>
       </section>
 
-      <div className="flex flex-wrap justify-end gap-3 border-t border-border pt-5">
-        <button className="button button-secondary" disabled={isPending} name="intent" type="submit" value="draft">
-          Save draft
-        </button>
+      <input name="discount" type="hidden" value="0.00" />
+      <input name="vatApplied" type="hidden" value="" />
+      <input name="vatRate" type="hidden" value="0.00" />
+      <input name="dueDate" type="hidden" value="" />
+      <input name="notes" type="hidden" value="" />
+
+      <div className="flex flex-wrap items-center gap-3">
         <button className="button button-primary" disabled={isPending} name="intent" type="submit" value="issue">
-          {isPending ? "Saving…" : "Issue bill"}
+          <Save aria-hidden="true" className="size-4" />
+          {isPending ? "Saving…" : "Save bill"}
+        </button>
+        <button className="button button-secondary" onClick={() => window.print()} type="button">
+          <Printer aria-hidden="true" className="size-4" />
+          Print
+        </button>
+        <button className="ml-auto flex min-h-11 items-center gap-2 px-2 text-sm text-text-secondary hover:text-primary" onClick={clearForm} type="button">
+          <RotateCcw aria-hidden="true" className="size-4" />
+          Clear form
         </button>
       </div>
     </form>
