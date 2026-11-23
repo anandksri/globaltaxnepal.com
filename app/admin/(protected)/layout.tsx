@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { requireAdmin } from "@/lib/admin/auth";
+import { isAdminAuthBypassed, requireAdmin } from "@/lib/admin/auth";
 import { AdminShell } from "./admin-shell";
 
 export default async function ProtectedAdminLayout({
@@ -7,5 +7,5 @@ export default async function ProtectedAdminLayout({
 }: Readonly<{ children: ReactNode }>) {
   const admin = await requireAdmin();
 
-  return <AdminShell admin={admin}>{children}</AdminShell>;
+  return <AdminShell admin={admin} authBypassed={isAdminAuthBypassed()}>{children}</AdminShell>;
 }

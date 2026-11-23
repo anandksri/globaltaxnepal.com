@@ -45,42 +45,72 @@ export async function loginAdmin(
     return { error: "Enter a valid email address and password." };
   }
 
+  let user: {
+    id: string;
+    email: string;
+    passwordHash: string;
+    isActive: boolean;
+  } | null;
+  let passwordMatches: boolean;
+
   try {
-    const user = await prisma.user.findUnique({
+    user = await prisma.user.findUnique({
       where: { email: parsed.data.email.toLowerCase() },
       select: {
         id: true,
         email: true,
         passwordHash: true,
         isActive: true,
-        role: { select: { name: true } },
       },
     });
 
-    const passwordMatches = user
+    passwordMatches = user
       ? await bcrypt.compare(parsed.data.password, user.passwordHash)
       : false;
-
-    if (
-      !user ||
-      !passwordMatches ||
-      !user.isActive
-    ) {
-      return { error: "The email or password is incorrect." };
-    }
-
-    const code = generateTwoFactorCode();
-    await sendAdminTwoFactorCode(user.email, code);
-    await createPendingTwoFactorSession(user.id, code);
   } catch (error) {
-    console.error("[admin-auth] Sign-in or 2FA setup could not be completed.", {
+    console.error("[admin-auth] Sign-in account lookup failed.", {
       name: error instanceof Error ? error.name : "UnknownError",
+    });
+    return {
+      error: "Sign-in is temporarily unavailable. Please try again later.",
+    };
+  }
+
+  if (!user || !passwordMatches || !user.isActive) {
+    return { error: "The email or password is incorrect." };
+  }
+
+  const code = generateTwoFactorCode();
+  try {
+    await sendAdminTwoFactorCode(user.email, code);
+  } catch (error) {
+    const errorCode =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      typeof error.code === "string"
+        ? error.code
+        : undefined;
+    console.error("[admin-auth] Verification email delivery failed.", {
+      name: error instanceof Error ? error.name : "UnknownError",
+      code: errorCode,
     });
     if (error instanceof Error && error.message.startsWith("Email configuration")) {
       return { error: error.message };
     }
     return {
       error: "The verification email could not be sent. Please try again later.",
+    };
+  }
+
+  try {
+    await createPendingTwoFactorSession(user.id, code);
+  } catch (error) {
+    console.error("[admin-auth] Pending verification session could not be created.", {
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
+    return {
+      error: "Sign-in is temporarily unavailable. Please try again later.",
     };
   }
 
