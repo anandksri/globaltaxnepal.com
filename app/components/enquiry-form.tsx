@@ -57,15 +57,11 @@ export function EnquiryForm() {
       formData.set("file", fileInput.files[0]);
     }
 
-    const apiBaseUrl =
-      process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, "") ||
-      "https://globaltax-backend.vercel.app";
-
     setIsSubmitting(true);
     setNotice({ kind: "idle", message: "Sending your enquiry…" });
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/enquiries`, {
+      const response = await fetch("/api/enquiries", {
         method: "POST",
         body: formData,
       });

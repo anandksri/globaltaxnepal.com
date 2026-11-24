@@ -178,7 +178,10 @@ const processSteps = [
   },
 ];
 
-const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || "";
+const contactEmail =
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() ||
+  process.env.CONTACT_EMAIL?.trim() ||
+  "globaltaxnepal@gmail.com";
 const mapsUrl =
   "https://www.google.com/maps/place/Popular+Accounting+Solution/@27.025344,84.885653,21z/data=!4m14!1m7!3m6!1s0x3993555c33bc9f2d:0xbf98288050de15ce!2sPopular+Accounting+Solution!8m2!3d27.025344!4d84.885653!16s%2Fg%2F11t6l8khsw!3m5!1s0x3993555c33bc9f2d:0xbf98288050de15ce!8m2!3d27.025344!4d84.885653!16s%2Fg%2F11t6l8khsw?entry=ttu";
 const mapEmbedUrl =
