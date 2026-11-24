@@ -283,8 +283,8 @@ function ServiceGroup({
       }`}
       id={group.id}
     >
-      <div className="site-container relative z-10 grid gap-6 lg:grid-cols-[0.68fr_1.32fr] lg:gap-16">
-        <div>
+      <div className="site-container relative z-10">
+        <div className="service-group-heading">
           <p className="text-xs font-medium tracking-[0.14em] text-secondary">
             {group.number} / SERVICES
           </p>
@@ -297,34 +297,11 @@ function ServiceGroup({
               {group.title}
             </h3>
           </div>
-          {index === 0 && (
-            <div className="relative mt-3 h-28 sm:h-36 lg:mt-5 lg:h-[16rem]">
-              <Image
-                alt=""
-                aria-hidden="true"
-                className="devotional-watermark devotional-watermark-ganesh"
-                height={667}
-                src="/assets/shri-ganesh-ji.jpg"
-                width={500}
-              />
-            </div>
-          )}
         </div>
-        <div className="service-offering-grid">
+        <div className="service-offering-grid mt-7 sm:mt-8">
           {group.offerings.map((offering) => (
             <ServiceOffering key={offering.title} offering={offering} />
           ))}
-          {group.id === "accounting-services" && (
-            <figure className="relative mt-5 min-h-48 overflow-hidden bg-[#d9dce1] sm:min-h-56">
-              <Image
-                alt="Business paperwork being organized at a desk"
-                className="h-full w-full object-cover"
-                fill
-                sizes="(max-width: 1023px) 100vw, 55vw"
-                src="/assets/organized-business-records.jpg"
-              />
-            </figure>
-          )}
         </div>
       </div>
     </section>
