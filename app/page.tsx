@@ -16,6 +16,9 @@ import {
   MapPinned,
   Phone,
   ReceiptText,
+  ShieldCheck,
+  Sparkles,
+  BadgeCheck,
   WalletCards,
   type LucideIcon,
 } from "lucide-react";
@@ -359,6 +362,24 @@ export default function HomePage() {
                 Professional tax, registration and accounting support for
                 individuals and businesses.
               </p>
+              <div className="mt-6 flex flex-wrap gap-2.5">
+                {[
+                  "Reliable guidance",
+                  "Clear documentation",
+                  "Personal support",
+                ].map((item) => (
+                  <span
+                    className="inline-flex items-center gap-1.5 border border-border bg-surface px-3 py-2 text-xs font-semibold text-primary"
+                    key={item}
+                  >
+                    <BadgeCheck
+                      aria-hidden="true"
+                      className="size-3.5 text-secondary"
+                    />
+                    {item}
+                  </span>
+                ))}
+              </div>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <a className="button button-primary" href="#contact">
                   Get Consultation
@@ -430,6 +451,38 @@ export default function HomePage() {
                 reimagined for the modern era.
               </span>
             </h2>
+            <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              {[
+                {
+                  icon: ShieldCheck,
+                  title: "Compliance support",
+                  text: "Organized, requirement-focused guidance.",
+                },
+                {
+                  icon: BriefcaseBusiness,
+                  title: "Business guidance",
+                  text: "Practical support from setup to operation.",
+                },
+                {
+                  icon: Sparkles,
+                  title: "Clear communication",
+                  text: "Straightforward advice and next steps.",
+                },
+              ].map(({ icon: Icon, title, text }) => (
+                <article
+                  className="group grid grid-cols-[2.5rem_1fr] gap-3 border border-border bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-secondary/50 hover:shadow-lg hover:shadow-primary/5"
+                  key={title}
+                >
+                  <span className="flex size-10 items-center justify-center rounded-full bg-secondary/10 text-secondary">
+                    <Icon aria-hidden="true" className="size-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-semibold text-primary">{title}</h3>
+                    <p className="mt-1 text-xs leading-5 text-text-secondary">{text}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -724,7 +777,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="border border-border bg-background p-5 sm:p-8 lg:p-9">
+              <div className="border border-border bg-background p-5 shadow-[0_24px_60px_-42px_rgba(23,43,77,0.45)] sm:p-8 lg:p-9">
                 <div className="mb-6 border-b border-border pb-5">
                   <h3 className="text-lg font-semibold text-primary">
                     Send an enquiry
