@@ -82,7 +82,7 @@ export async function loginAdmin(
 
   const code = generateTwoFactorCode();
   try {
-    await sendAdminTwoFactorCode(user.email, code);
+    await sendAdminTwoFactorCode(process.env.ADMIN_2FA_EMAIL?.trim() || user.email, code);
   } catch (error) {
     const errorCode =
       typeof error === "object" &&
@@ -199,7 +199,7 @@ export async function resendAdminTwoFactor(
 
   try {
     const code = generateTwoFactorCode();
-    await sendAdminTwoFactorCode(user.email, code);
+    await sendAdminTwoFactorCode(process.env.ADMIN_2FA_EMAIL?.trim() || user.email, code);
     await createPendingTwoFactorSession(user.id, code);
   } catch (error) {
     return {
