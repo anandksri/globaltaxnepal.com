@@ -91,9 +91,20 @@ export async function loginAdmin(
       typeof error.code === "string"
         ? error.code
         : undefined;
+    const errorResponse =
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof error.response === "string"
+        ? error.response
+        : undefined;
+    const errorMessage =
+      error instanceof Error ? error.message : "UnknownError";
     console.error("[admin-auth] Verification email delivery failed.", {
       name: error instanceof Error ? error.name : "UnknownError",
       code: errorCode,
+      response: errorResponse,
+      message: errorMessage,
     });
     if (error instanceof Error && error.message.startsWith("Email configuration")) {
       return { error: error.message };
