@@ -6,7 +6,7 @@ const setupSchema = z.object({
   ADMIN_EMAIL: z.string().trim().email().max(254),
   ADMIN_PASSWORD: z
     .string()
-    .min(12)
+    .min(11)
     .max(72)
     .refine((password) => Buffer.byteLength(password, "utf8") <= 72),
   ADMIN_NAME: z.string().trim().min(1).max(100).optional(),
@@ -20,7 +20,7 @@ const setup = setupSchema.safeParse({
 
 if (!setup.success) {
   console.error(
-    "Admin setup requires a valid ADMIN_EMAIL, an ADMIN_PASSWORD of 12–72 characters (at most 72 UTF-8 bytes), and an optional ADMIN_NAME.",
+    "Admin setup requires a valid ADMIN_EMAIL, an ADMIN_PASSWORD of 11–72 characters (at most 72 UTF-8 bytes), and an optional ADMIN_NAME.",
   );
   process.exitCode = 1;
 } else {
@@ -28,14 +28,6 @@ if (!setup.success) {
 
   try {
     const email = setup.data.ADMIN_EMAIL.toLowerCase();
-    const existing = await prisma.user.findUnique({ where: { email } });
-
-    if (existing) {
-      throw new Error(
-        "An account with ADMIN_EMAIL already exists. No account or password was changed.",
-      );
-    }
-
     const passwordHash = await bcrypt.hash(setup.data.ADMIN_PASSWORD, 12);
 
     await prisma.$transaction(async (transaction) => {
@@ -48,8 +40,15 @@ if (!setup.success) {
         },
       });
 
-      await transaction.user.create({
-        data: {
+      await transaction.user.upsert({
+        where: { email },
+        update: {
+          name: setup.data.ADMIN_NAME,
+          passwordHash,
+          isActive: true,
+          roleId: role.id,
+        },
+        create: {
           name: setup.data.ADMIN_NAME,
           email,
           passwordHash,

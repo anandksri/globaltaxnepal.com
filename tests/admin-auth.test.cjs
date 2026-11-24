@@ -53,24 +53,3 @@ test("normal mode requires a session and looks up authenticated users by id", as
   assert.equal((await signedIn.auth.getCurrentAdmin()).id, "admin-id");
   assert.equal(signedIn.calls[0].where.id, "session-user");
 });
-
-test("enabled bypass uses the configured active super administrator", async () => {
-  const { auth, calls } = loadAuth({
-    env: { ADMIN_AUTH_BYPASS: "true", ADMIN_AUTH_BYPASS_EMAIL: " ADMIN@EXAMPLE.TEST " },
-    user: superAdmin,
-  });
-  assert.equal((await auth.requirePermission("BILLING", "EDIT")).id, "admin-id");
-  assert.equal(calls[0].where.email, "admin@example.test");
-});
-
-test("bypass fails closed for missing, inactive or non-super-admin accounts", async () => {
-  for (const user of [null, { ...superAdmin, isActive: false }, { ...superAdmin, role: { name: "STAFF", permissions: [] } }]) {
-    const { auth } = loadAuth({
-      env: { ADMIN_AUTH_BYPASS: "true", ADMIN_AUTH_BYPASS_EMAIL: "admin@example.test" },
-      user,
-    });
-    await assert.rejects(auth.getCurrentAdmin(), /active super administrator/);
-  }
-  const { auth } = loadAuth({ env: { ADMIN_AUTH_BYPASS: "true" } });
-  await assert.rejects(auth.getCurrentAdmin(), /ADMIN_AUTH_BYPASS_EMAIL/);
-});

@@ -16,11 +16,10 @@ import { AdminPageTitle } from "./admin-page-title";
 
 type AdminShellProps = {
   admin: AdminIdentity;
-  authBypassed: boolean;
   children: ReactNode;
 };
 
-export function AdminShell({ admin, authBypassed, children }: AdminShellProps) {
+export function AdminShell({ admin, children }: AdminShellProps) {
   const displayName = admin.name || admin.email;
 
   return (
@@ -109,7 +108,7 @@ export function AdminShell({ admin, authBypassed, children }: AdminShellProps) {
                   <p className="mt-1 break-all text-xs text-text-secondary">
                     {admin.email}
                   </p>
-                  {!authBypassed && <form action={logoutAdmin} className="mt-4 border-t border-border pt-3">
+                  <form action={logoutAdmin} className="mt-4 border-t border-border pt-3">
                     <button
                       className="flex min-h-9 w-full items-center gap-2 text-left text-sm font-medium text-primary transition-colors duration-200 ease-out hover:text-secondary"
                       type="submit"
@@ -121,7 +120,7 @@ export function AdminShell({ admin, authBypassed, children }: AdminShellProps) {
                       />
                       Sign out
                     </button>
-                  </form>}
+                  </form>
                 </div>
               </details>
             </div>
@@ -129,11 +128,6 @@ export function AdminShell({ admin, authBypassed, children }: AdminShellProps) {
         </header>
 
         <main className="min-w-0 flex-1 px-4 py-7 sm:px-6 sm:py-9 lg:px-9">
-          {authBypassed && (
-            <p className="mb-6 border border-error bg-surface p-3 text-sm text-error" role="alert">
-              Login is disabled. Anyone with access to this site can use the admin area as {admin.email}.
-            </p>
-          )}
           <div className="mb-7 flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary">

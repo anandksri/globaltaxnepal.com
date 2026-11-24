@@ -224,7 +224,7 @@ export function AccountProfileForm({ user }: {
 
 export function ChangePasswordForm() {
   const [state, action, pending] = useActionState(changeOwnPassword, {});
-  return <form action={action} className="space-y-4"><h2 className="font-semibold text-primary">Change password</h2><ActionMessage state={state} /><Field id="current-password" label="Current password" name="currentPassword" type="password" /><Field id="new-password" label="New password (at least 12 characters)" name="newPassword" type="password" /><Field id="confirm-password" label="Confirm new password" name="confirmPassword" type="password" /><div className="flex justify-end"><button className="button button-primary" disabled={pending} type="submit">{pending ? "Changing…" : "Change password"}</button></div></form>;
+  return <form action={action} className="space-y-4"><h2 className="font-semibold text-primary">Change password</h2><ActionMessage state={state} /><Field id="current-password" label="Current password" name="currentPassword" type="password" /><Field id="new-password" label="New password (at least 11 characters)" name="newPassword" type="password" /><Field id="confirm-password" label="Confirm new password" name="confirmPassword" type="password" /><div className="flex justify-end"><button className="button button-primary" disabled={pending} type="submit">{pending ? "Changing…" : "Change password"}</button></div></form>;
 }
 
 export function InvitationPasswordForm({ token }: { token: string }) {

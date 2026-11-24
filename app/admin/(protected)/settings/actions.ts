@@ -338,7 +338,7 @@ export async function completeStaffInvitation(
   formData: FormData,
 ): Promise<SettingsActionState> {
   const tokenValue = z.string().min(40).max(100).safeParse(token);
-  const password = z.string().min(12, "Use at least 12 characters.").max(72)
+  const password = z.string().min(11, "Use at least 11 characters.").max(72)
     .refine((value) => Buffer.byteLength(value, "utf8") <= 72, "Password exceeds 72 UTF-8 bytes.");
   const parsed = z.object({ password, confirmPassword: z.string() }).refine(
     (value) => value.password === value.confirmPassword,
@@ -417,7 +417,7 @@ export async function changeOwnPassword(
   const admin = await requireAdmin();
   const parsed = z.object({
     currentPassword: z.string().min(1).max(72),
-    newPassword: z.string().min(12, "Use at least 12 characters.").max(72)
+    newPassword: z.string().min(11, "Use at least 11 characters.").max(72)
       .refine((value) => Buffer.byteLength(value, "utf8") <= 72, "Password exceeds 72 UTF-8 bytes."),
     confirmPassword: z.string(),
   }).refine((value) => value.newPassword === value.confirmPassword, {

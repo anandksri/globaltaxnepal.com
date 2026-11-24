@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LogOut } from "lucide-react";
 import { logoutAdmin } from "@/app/admin/actions";
-import { isAdminAuthBypassed, requireAdmin } from "@/lib/admin/auth";
+import { requireAdmin } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
 import { AccountProfileForm, ChangePasswordForm } from "../settings-forms";
 
@@ -27,7 +27,7 @@ export default async function AccountSettingsPage() {
       <section className="space-y-4 border border-border bg-surface p-5 sm:p-7">
         <ChangePasswordForm />
       </section>
-      {!isAdminAuthBypassed() && <form action={logoutAdmin}><button className="button button-secondary" type="submit"><LogOut aria-hidden="true" className="size-4" strokeWidth={1.75} />Sign out</button></form>}
+      <form action={logoutAdmin}><button className="button button-secondary" type="submit"><LogOut aria-hidden="true" className="size-4" strokeWidth={1.75} />Sign out</button></form>
     </div>
   );
 }

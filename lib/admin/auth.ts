@@ -37,10 +37,6 @@ export type AdminIdentity = {
   permissions: Array<{ module: AdminModule; action: PermissionAction }>;
 };
 
-export function isAdminAuthBypassed() {
-  return process.env.ADMIN_AUTH_BYPASS === "true";
-}
-
 export async function createAdminSession(userId: string) {
   const token = await new SignJWT({})
     .setProtectedHeader({ alg: "HS256" })
@@ -199,48 +195,39 @@ export async function clearAdminSession() {
 }
 
 export async function getCurrentAdmin(): Promise<AdminIdentity | null> {
-  let where: { id: string } | { email: string };
-  if (isAdminAuthBypassed()) {
-    const email = process.env.ADMIN_AUTH_BYPASS_EMAIL?.trim().toLowerCase();
-    if (!email) {
-      throw new Error("ADMIN_AUTH_BYPASS_EMAIL must identify an active super administrator.");
+  const token = (await cookies()).get(sessionCookieName)?.value;
+  if (!token) {
+    return null;
+  }
+
+  let userId: string;
+  try {
+    const { payload } = await jwtVerify(token, getSessionKey(), {
+      algorithms: ["HS256"],
+      audience: sessionAudience,
+      issuer: sessionIssuer,
+    });
+
+    if (typeof payload.sub !== "string") {
+      return null;
     }
-    where = { email };
-  } else {
-    const token = (await cookies()).get(sessionCookieName)?.value;
-    if (!token) {
+    userId = payload.sub;
+  } catch (error) {
+    if (
+      error instanceof joseErrors.JWTExpired ||
+      error instanceof joseErrors.JWTInvalid ||
+      error instanceof joseErrors.JWSInvalid ||
+      error instanceof joseErrors.JWSSignatureVerificationFailed ||
+      error instanceof joseErrors.JWTClaimValidationFailed
+    ) {
       return null;
     }
 
-    try {
-      const { payload } = await jwtVerify(token, getSessionKey(), {
-        algorithms: ["HS256"],
-        audience: sessionAudience,
-        issuer: sessionIssuer,
-      });
-
-      if (typeof payload.sub !== "string") {
-        return null;
-      }
-
-      where = { id: payload.sub };
-    } catch (error) {
-      if (
-        error instanceof joseErrors.JWTExpired ||
-        error instanceof joseErrors.JWTInvalid ||
-        error instanceof joseErrors.JWSInvalid ||
-        error instanceof joseErrors.JWSSignatureVerificationFailed ||
-        error instanceof joseErrors.JWTClaimValidationFailed
-      ) {
-        return null;
-      }
-
-      throw error;
-    }
+    throw error;
   }
 
   const user = await prisma.user.findUnique({
-    where,
+    where: { id: userId },
     select: {
       id: true,
       name: true,
@@ -255,10 +242,6 @@ export async function getCurrentAdmin(): Promise<AdminIdentity | null> {
       },
     },
   });
-
-  if (isAdminAuthBypassed() && (!user || !user.isActive || user.role.name !== "SUPER_ADMIN")) {
-    throw new Error("ADMIN_AUTH_BYPASS_EMAIL must identify an active super administrator.");
-  }
 
   if (!user || !user.isActive) {
     return null;
