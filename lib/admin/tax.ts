@@ -85,7 +85,10 @@ export async function getComplianceFormData(taskId?: string) {
       select: { id: true, title: true, clientId: true, originalName: true },
     }),
     prisma.user.findMany({
-      where: { isActive: true, role: { name: "ADMIN" } },
+      where: {
+        isActive: true,
+        role: { name: { not: "SUPER_ADMIN" } },
+      },
       orderBy: [{ name: "asc" }, { email: "asc" }],
       select: { id: true, name: true, email: true },
     }),

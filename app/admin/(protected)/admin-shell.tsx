@@ -2,6 +2,7 @@
 
 import {
   ArrowUpRight,
+  Bell,
   Building2,
   ChevronDown,
   CircleUserRound,
@@ -10,16 +11,24 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { logoutAdmin } from "@/app/admin/actions";
+import { openTaskNotification } from "./notification-actions";
 import type { AdminIdentity } from "@/lib/admin/auth";
 import { AdminNavigation } from "./admin-navigation";
 import { AdminPageTitle } from "./admin-page-title";
 
 type AdminShellProps = {
   admin: AdminIdentity;
+  notifications: Array<{
+    id: string;
+    title: string;
+    body: string;
+    taskId: string | null;
+    createdAt: Date;
+  }>;
   children: ReactNode;
 };
 
-export function AdminShell({ admin, children }: AdminShellProps) {
+export function AdminShell({ admin, notifications, children }: AdminShellProps) {
   const displayName = admin.name || admin.email;
 
   return (
@@ -82,6 +91,34 @@ export function AdminShell({ admin, children }: AdminShellProps) {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-3">
+              {notifications.length > 0 && (
+                <details className="relative">
+                  <summary
+                    aria-label={`${notifications.length} unread notifications`}
+                    className="relative flex size-10 cursor-pointer list-none items-center justify-center rounded-sm border border-border text-primary focus-visible:outline"
+                  >
+                    <Bell aria-hidden="true" className="size-4" />
+                    <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-error text-[0.65rem] font-bold text-white">
+                      {notifications.length > 9 ? "9+" : notifications.length}
+                    </span>
+                  </summary>
+                  <div className="absolute right-0 top-12 z-30 w-[min(22rem,calc(100vw-2rem))] border border-border bg-surface p-2">
+                    {notifications.map((notification) => (
+                      <article className="border-b border-border px-3 py-3 last:border-0" key={notification.id}>
+                        <p className="text-sm font-semibold text-primary">{notification.title}</p>
+                        <p className="mt-1 text-xs leading-5 text-text-secondary">{notification.body}</p>
+                        {notification.taskId && (
+                          <form action={openTaskNotification.bind(null, notification.id, notification.taskId)}>
+                            <button className="mt-2 text-xs font-semibold text-secondary" type="submit">
+                              View task
+                            </button>
+                          </form>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                </details>
+              )}
               <details className="relative">
                 <summary
                   aria-label="Account menu"

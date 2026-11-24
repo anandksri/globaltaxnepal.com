@@ -5,11 +5,13 @@ import { z } from "zod";
 import { completeComplianceTask } from "../../actions";
 import { CompleteComplianceTaskForm } from "../../tax-forms";
 import { dueDateState, getComplianceTask } from "@/lib/admin/tax";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Compliance task" };
 export const dynamic = "force-dynamic";
 
 export default async function ComplianceTaskDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  await requirePermission("TAX", "VIEW");
   const { id } = await params;
   const parsed = z.string().min(1).max(191).safeParse(id);
   if (!parsed.success) notFound();

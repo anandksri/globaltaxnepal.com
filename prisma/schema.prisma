@@ -115,11 +115,26 @@ model User {
   createdComplianceTasks ComplianceTask[] @relation("ComplianceTaskCreatedBy")
   invitations UserInvitation[] @relation("InvitationRecipient")
   createdInvitations UserInvitation[] @relation("InvitationCreatedBy")
+  notifications Notification[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   @@index([roleId])
   @@index([isActive])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String   @db.VarChar(200)
+  body      String   @db.Text
+  taskId    String?  @db.VarChar(191)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
+  @@index([taskId])
 }
 
 model Role {

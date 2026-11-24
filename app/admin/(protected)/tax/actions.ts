@@ -3,6 +3,7 @@
 import { ComplianceStatus, Prisma, TaxFilingStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import nodemailer from "nodemailer";
 import { z } from "zod";
 import { requirePermission } from "@/lib/admin/auth";
 import { isDocumentForClient } from "@/lib/admin/tax";
@@ -56,6 +57,38 @@ function fieldErrors(issues: { path: PropertyKey[]; message: string }[]) {
 
 function optionalDateValue(value: string) {
   return value ? new Date(`${value}T00:00:00.000Z`) : null;
+}
+
+async function sendTaskAssignedEmail(taskId: string, assignedToId: string, title: string, dueDate: string) {
+  const assignee = await prisma.user.findUnique({
+    where: { id: assignedToId },
+    select: { email: true, name: true, isActive: true },
+  });
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPassword = process.env.SMTP_PASSWORD;
+  const smtpFrom = process.env.SMTP_FROM || smtpUser;
+  if (!assignee?.isActive || !smtpUser || !smtpPassword || !smtpFrom) return;
+  const transport = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: Number(process.env.SMTP_PORT || "587"),
+    secure: Number(process.env.SMTP_PORT || "587") === 465,
+    auth: { user: smtpUser, pass: smtpPassword },
+  });
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") || "https://globaltaxnepal-com.vercel.app";
+  await transport.sendMail({
+    from: smtpFrom,
+    to: assignee.email,
+    subject: `New task assigned: ${title}`,
+    text: `Hello ${assignee.name || "Team Member"},\n\nA new task has been assigned to you:\n${title}\nDue date: ${dueDate}\n\nView your tasks: ${siteUrl}/admin/my-tasks`,
+  });
+  await prisma.notification.create({
+    data: {
+      userId: assignedToId,
+      title: "New task assigned",
+      body: `${title} is due ${dueDate}.`,
+      taskId,
+    },
+  });
 }
 
 function readRecord(formData: FormData) {
@@ -315,6 +348,18 @@ export async function createComplianceTask(
       return created;
     });
     taskId = task.id;
+    if (parsed.data.assignedToId) {
+      await sendTaskAssignedEmail(
+        task.id,
+        parsed.data.assignedToId,
+        task.title,
+        parsed.data.dueDate,
+      ).catch((error) => {
+        console.error("[admin-tax] Task assignment notification failed.", {
+          name: error instanceof Error ? error.name : "UnknownError",
+        });
+      });
+    }
     revalidateTaxPaths();
   } catch (error) {
     if (error instanceof Error) {
@@ -395,6 +440,18 @@ export async function updateComplianceTask(
   } catch (error) {
     console.error("[admin-tax] Compliance task update failed.", { name: error instanceof Error ? error.name : "UnknownError" });
     return { error: "The compliance task could not be updated. Please try again." };
+  }
+  if (parsed.data.assignedToId) {
+    await sendTaskAssignedEmail(
+      id.data,
+      parsed.data.assignedToId,
+      parsed.data.title,
+      parsed.data.dueDate,
+    ).catch((error) => {
+      console.error("[admin-tax] Task reassignment notification failed.", {
+        name: error instanceof Error ? error.name : "UnknownError",
+      });
+    });
   }
   revalidateTaxPaths();
   revalidatePath(`/admin/tax/compliance/${id.data}`);

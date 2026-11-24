@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { dueDateState, listComplianceTasks } from "@/lib/admin/tax";
 import { Pagination } from "../pagination";
+import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Compliance tracking" };
 export const dynamic = "force-dynamic";
@@ -12,6 +13,7 @@ export default async function CompliancePage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requirePermission("TAX", "VIEW");
   const result = await listComplianceTasks(await searchParams);
   return (
     <div className="space-y-5">

@@ -2,6 +2,7 @@
 
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
+import nodemailer from "nodemailer";
 import {
   AdminModule,
   PermissionAction,
@@ -59,6 +60,34 @@ function mayAssignRole(
       granted.module === required.module && granted.action === required.action
     ))
   );
+}
+
+async function sendStaffSetupEmail(email: string, name: string | null, invitePath: string) {
+  const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+  const smtpPort = Number(process.env.SMTP_PORT || "587");
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPassword = process.env.SMTP_PASSWORD;
+  const smtpFrom = process.env.SMTP_FROM || smtpUser;
+  if (!smtpUser || !smtpPassword || !smtpFrom) {
+    throw new Error("STAFF_SETUP_EMAIL_CONFIG_MISSING");
+  }
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
+    "https://globaltaxnepal-com.vercel.app";
+  const setupUrl = `${baseUrl}${invitePath}`;
+  const transport = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    auth: { user: smtpUser, pass: smtpPassword },
+  });
+  await transport.sendMail({
+    from: smtpFrom,
+    to: email,
+    subject: "Set up your Global Tax Nepal staff account",
+    text: `Hello ${name || "Staff Member"},\n\nYour staff account has been created. Set your password using this one-time link:\n${setupUrl}\n\nThe link expires in 72 hours.`,
+    html: `<p>Hello ${name || "Staff Member"},</p><p>Your staff account has been created.</p><p><a href="${setupUrl}" style="display:inline-block;padding:12px 18px;background:#172b4d;color:#fff;text-decoration:none;border-radius:6px">Create my password</a></p><p>This one-time link expires in 72 hours.</p>`,
+  });
 }
 
 export async function saveCompanySettings(
@@ -180,7 +209,19 @@ export async function createStaff(
       return created;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     revalidatePath("/admin/settings/staff");
-    return { success: "Staff account created. Share the one-time setup link with the staff member.", invitePath: `/admin/invite/${token}` };
+    const invitePath = `/admin/invite/${token}`;
+    try {
+      await sendStaffSetupEmail(parsed.data.email, parsed.data.name, invitePath);
+      return { success: "Staff account created and password setup email sent.", invitePath };
+    } catch (error) {
+      console.error("[admin-settings] Staff setup email failed.", {
+        name: error instanceof Error ? error.name : "UnknownError",
+      });
+      return {
+        success: "Staff account created, but the setup email could not be sent.",
+        invitePath,
+      };
+    }
   } catch (error) {
     if (error instanceof Error && error.message === "STAFF_ROLE_UNAVAILABLE") return { error: "Choose an available role." };
     if (error instanceof Error && error.message === "STAFF_ROLE_ASSIGNMENT_RESTRICTED") return { error: "You cannot assign a role with permissions you do not have." };
@@ -267,8 +308,8 @@ export async function issueStaffInvitation(
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(token).digest("hex");
   try {
-    await prisma.$transaction(async (transaction) => {
-      const user = await transaction.user.findUnique({ where: { id: id.data }, select: { id: true, isActive: true } });
+    const inviteUser = await prisma.$transaction(async (transaction) => {
+      const user = await transaction.user.findUnique({ where: { id: id.data }, select: { id: true, isActive: true, name: true, email: true } });
       if (!user || !user.isActive) throw new Error("STAFF_USER_UNAVAILABLE");
       await transaction.userInvitation.updateMany({ where: { userId: id.data, usedAt: null }, data: { usedAt: new Date() } });
       await transaction.userInvitation.create({
@@ -277,14 +318,24 @@ export async function issueStaffInvitation(
       await transaction.activityLog.create({
         data: { actorId: admin.id, action: "STAFF_INVITATION_REISSUED", targetType: "User", targetId: id.data },
       });
+      return user;
     });
+    const invitePath = `/admin/invite/${token}`;
+    try {
+      await sendStaffSetupEmail(inviteUser.email, inviteUser.name, invitePath);
+    } catch (error) {
+      console.error("[admin-settings] Reissued staff setup email failed.", {
+        name: error instanceof Error ? error.name : "UnknownError",
+      });
+      return { success: "Setup link created, but the email could not be sent.", invitePath };
+    }
+    revalidatePath(`/admin/settings/staff/${id.data}`);
+    return { success: "A new setup email was sent.", invitePath };
   } catch (error) {
     if (error instanceof Error && error.message === "STAFF_USER_UNAVAILABLE") return { error: "Only active staff accounts can receive an invitation." };
     console.error("[admin-settings] Staff invitation could not be issued.", { name: error instanceof Error ? error.name : "UnknownError" });
     return { error: "The setup invitation could not be issued." };
   }
-  revalidatePath(`/admin/settings/staff/${id.data}`);
-  return { success: "New one-time setup link created.", invitePath: `/admin/invite/${token}` };
 }
 
 export async function saveRolePermissions(

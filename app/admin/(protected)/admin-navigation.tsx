@@ -3,6 +3,7 @@
 import {
   Activity,
   BookOpenCheck,
+  CheckSquare,
   Building2,
   CircleDollarSign,
   CircleUserRound,
@@ -30,6 +31,7 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
     title: "Dashboard",
     items: [
       { label: "Overview", href: "/admin", icon: LayoutDashboard },
+      { label: "My tasks", href: "/admin/my-tasks", icon: CheckSquare },
       { label: "Business summary", href: "/admin#business-summary", icon: Building2 },
       { label: "Recent activity", href: "/admin#recent-activity", icon: Activity },
     ],
@@ -62,6 +64,7 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
 ];
 
 function requiredPermission(href: string) {
+  if (href === "/admin/my-tasks") return null;
   if (href.startsWith("/admin/clients")) return AdminModule.CLIENTS;
   if (href.startsWith("/admin/billing") || href.startsWith("/admin/details-bills")) return AdminModule.BILLING;
   if (href.startsWith("/admin/receipt-vouchers") || href.startsWith("/admin/payment-vouchers")) return AdminModule.VOUCHERS;
@@ -87,6 +90,7 @@ export function AdminNavigation({ admin }: { admin: AdminIdentity }) {
           if (href === "/admin/settings/roles") return false;
           if (href === "/admin/settings/account") return true;
           const module = requiredPermission(href);
+          if (module === null) return true;
           return module !== null && admin.permissions.some((permission) =>
             permission.module === module && permission.action === PermissionAction.VIEW
           );
