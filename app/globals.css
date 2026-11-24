@@ -353,6 +353,28 @@ header {
   border-top: 4px solid var(--color-secondary);
 }
 
+.footer-glow {
+  position: absolute;
+  right: -10rem;
+  bottom: -16rem;
+  width: 34rem;
+  height: 34rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgb(22 125 120 / 30%), transparent 68%);
+  pointer-events: none;
+}
+
+.footer-glow::before {
+  position: absolute;
+  top: 4rem;
+  left: -48rem;
+  width: 24rem;
+  height: 24rem;
+  border: 1px solid rgb(255 255 255 / 6%);
+  border-radius: 9999px;
+  content: "";
+}
+
 .about-section {
   background:
     linear-gradient(135deg, rgb(23 43 77 / 2.5%), transparent 42rem),

@@ -35,7 +35,7 @@ export function SiteHeader() {
   }, [menuOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-surface">
+    <header className="sticky top-0 z-50 border-b border-border/90 bg-surface/95 backdrop-blur-xl">
       <div className="site-container flex min-h-[4.5rem] items-center justify-between gap-4">
         <a
           aria-label="Global Tax Nepal home"

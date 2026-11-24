@@ -795,12 +795,13 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-border bg-surface">
-        <div className="site-container grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.2fr_0.75fr_1fr_1.2fr] lg:gap-8 lg:py-14">
+      <footer className="relative z-10 overflow-hidden border-t border-primary/10 bg-primary text-white">
+        <div className="footer-glow" aria-hidden="true" />
+        <div className="site-container relative z-10 grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.35fr_0.7fr_0.9fr_1.15fr] lg:gap-10 lg:py-16">
           <div>
             <a
               aria-label="Global Tax Nepal home"
-              className="inline-flex"
+              className="inline-flex rounded-sm bg-white px-3 py-2"
               href="#home"
             >
               <Image
@@ -810,13 +811,13 @@ export default function HomePage() {
                 width={200}
               />
             </a>
-            <p className="mt-4 max-w-sm text-sm leading-6 text-text-secondary">
+            <p className="mt-5 max-w-sm text-sm leading-7 text-white/70">
               Professional tax and business consultancy for individuals,
               entrepreneurs and organizations.
             </p>
-            <div className="mt-4 space-y-2 text-sm text-text-secondary">
+            <div className="mt-5 space-y-2.5 text-sm text-white/75">
               <a
-                className="block transition-colors duration-200 ease-out hover:text-primary"
+                className="block transition-colors duration-200 ease-out hover:text-white"
                 href="tel:+9779855024715"
               >
                 +977 9855024715
@@ -824,7 +825,7 @@ export default function HomePage() {
               <p>Popular Accounting Solutions, Birgunj, Nepal</p>
               {contactEmail ? (
                 <a
-                  className="block break-all transition-colors duration-200 ease-out hover:text-primary"
+                  className="block break-all transition-colors duration-200 ease-out hover:text-white"
                   href={`mailto:${contactEmail}`}
                 >
                   {contactEmail}
@@ -836,7 +837,7 @@ export default function HomePage() {
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold text-primary">Explore</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-white">Explore</h2>
             <nav
               aria-label="Footer navigation"
               className="mt-3 flex flex-col gap-2"
@@ -849,7 +850,7 @@ export default function HomePage() {
                 ["Contact", "#contact"],
               ].map(([label, href]) => (
                 <a
-                  className="w-fit text-sm text-text-secondary transition-colors duration-200 ease-out hover:text-primary"
+                  className="w-fit text-sm text-white/70 transition-colors duration-200 ease-out hover:text-white"
                   href={href}
                   key={href}
                 >
@@ -860,7 +861,7 @@ export default function HomePage() {
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold text-primary">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-white">
               Consultancy services
             </h2>
             <nav
@@ -877,7 +878,7 @@ export default function HomePage() {
                 ["Document Management", "#documentation-services"],
               ].map(([label, href]) => (
                 <a
-                  className="w-fit text-sm text-text-secondary transition-colors duration-200 ease-out hover:text-primary"
+                  className="w-fit text-sm text-white/70 transition-colors duration-200 ease-out hover:text-white"
                   href={href}
                   key={label}
                 >
@@ -888,7 +889,7 @@ export default function HomePage() {
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold text-primary">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-white">
               Government resources
             </h2>
             <nav
@@ -897,7 +898,7 @@ export default function HomePage() {
             >
               {governmentResources.map(({ label, href }) => (
                 <a
-                  className="w-fit text-sm text-text-secondary transition-colors duration-200 ease-out hover:text-primary"
+                  className="w-fit text-sm text-white/70 transition-colors duration-200 ease-out hover:text-white"
                   href={href}
                   key={label}
                   rel="noopener noreferrer"
@@ -909,7 +910,7 @@ export default function HomePage() {
             </nav>
             <div className="mt-5 flex gap-5">
               <a
-                className="text-sm font-medium text-secondary transition-colors duration-200 ease-out hover:text-primary"
+                className="text-sm font-medium text-white transition-colors duration-200 ease-out hover:text-highlight"
                 href={facebookUrl}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -917,7 +918,7 @@ export default function HomePage() {
                 Facebook
               </a>
               <a
-                className="text-sm font-medium text-secondary transition-colors duration-200 ease-out hover:text-primary"
+                className="text-sm font-medium text-white transition-colors duration-200 ease-out hover:text-highlight"
                 href={whatsappUrl}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -927,15 +928,15 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        <div className="border-t border-border">
-          <div className="site-container flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-text-secondary">
+        <div className="relative z-10 border-t border-white/10">
+          <div className="site-container flex flex-col gap-2 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-white/55">
               © {new Date().getFullYear()} Global Tax Nepal. All rights reserved.
             </p>
-            <p className="text-xs text-text-secondary">
+            <p className="text-xs text-white/55">
               Developed by{" "}
               <a
-                className="font-medium text-secondary underline underline-offset-2 transition-colors duration-200 ease-out hover:text-primary"
+                className="font-medium text-white underline underline-offset-2 transition-colors duration-200 ease-out hover:text-highlight"
                 href="https://anandkeshari.com.np"
                 rel="noopener noreferrer"
                 target="_blank"
