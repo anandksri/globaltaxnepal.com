@@ -139,14 +139,46 @@ header {
 }
 
 .service-offering {
+  position: relative;
+  min-height: 15rem;
+  border: 1px solid var(--border-default);
+  background: var(--surface-default);
+  padding: 1.25rem;
   transition:
-    background-color 180ms ease-out,
-    padding 180ms ease-out;
+    transform 180ms ease-out,
+    border-color 180ms ease-out,
+    box-shadow 180ms ease-out;
 }
 
 .service-offering:hover {
-  background: rgb(22 125 120 / 4%);
-  padding-inline: 0.75rem;
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--color-secondary) 35%, var(--border-default));
+  box-shadow: 0 18px 38px -28px rgb(23 43 77 / 35%);
+}
+
+.service-offering-icon {
+  display: flex;
+  width: 3rem;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 18%, var(--border-default));
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-secondary) 7%, var(--surface-default));
+  color: var(--color-secondary);
+  transition:
+    background-color 180ms ease-out,
+    color 180ms ease-out;
+}
+
+.service-offering:hover .service-offering-icon {
+  background: var(--color-secondary);
+  color: white;
+}
+
+.service-offering-grid {
+  display: grid;
+  gap: 0.75rem;
 }
 
 .contact-section {
@@ -283,10 +315,11 @@ header {
 }
 
 .process-step {
-  display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
-  gap: 0.875rem;
-  padding-bottom: 1.5rem;
+  min-height: 12rem;
+  border: 1px solid var(--border-default);
+  background: var(--surface-default);
+  padding: 1.25rem;
+  box-shadow: 0 18px 38px -34px rgb(23 43 77 / 25%);
 }
 
 .process-step:last-child {
@@ -310,12 +343,37 @@ header {
 }
 
 .process-step-content {
-  padding-top: 0.1875rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-default);
+}
+
+.contact-form-card {
+  border-radius: 0.75rem;
+  border-top: 4px solid var(--color-secondary);
+}
+
+.about-section {
+  background:
+    linear-gradient(135deg, rgb(23 43 77 / 2.5%), transparent 42rem),
+    var(--surface-background);
+}
+
+.services-section {
+  background: #edf2f3;
+}
+
+.services-section > .service-group:nth-of-type(even) {
+  background: #f8fafb;
 }
 
 @media (min-width: 40rem) {
   .site-container {
     width: min(calc(100% - 3rem), var(--content-width));
+  }
+
+  .service-offering-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -328,6 +386,10 @@ header {
 @media (min-width: 64rem) {
   .site-container {
     width: min(calc(100% - 4rem), var(--content-width));
+  }
+
+  .service-offering-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .process-timeline::before {

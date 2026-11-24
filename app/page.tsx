@@ -240,18 +240,20 @@ function ServiceOffering({ offering }: { offering: Offering }) {
   const Icon = offering.icon;
 
   return (
-    <article className="service-offering grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1 border-t border-border py-4 sm:grid-cols-[1.25rem_minmax(0,1fr)_auto] sm:gap-4">
-      <Icon aria-hidden="true" className="icon mt-0.5 text-secondary" />
-      <div>
+    <article className="service-offering group">
+      <span className="service-offering-icon">
+        <Icon aria-hidden="true" className="size-5" />
+      </span>
+      <div className="mt-5">
         <h4 className="text-base font-semibold leading-snug text-primary">
           {offering.title}
         </h4>
-        <p className="mt-1 text-sm leading-5 text-text-secondary">
+        <p className="mt-2 min-h-10 text-sm leading-5 text-text-secondary">
           {offering.description}
         </p>
       </div>
       <a
-        className="group col-start-2 inline-flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-secondary transition-colors duration-200 ease-out hover:text-primary sm:col-start-3 sm:self-center"
+        className="mt-5 inline-flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-secondary transition-colors duration-200 ease-out hover:text-primary"
         href="#contact"
       >
         Enquire
@@ -308,7 +310,7 @@ function ServiceGroup({
             </div>
           )}
         </div>
-        <div>
+        <div className="service-offering-grid">
           {group.offerings.map((offering) => (
             <ServiceOffering key={offering.title} offering={offering} />
           ))}
@@ -625,7 +627,7 @@ export default function HomePage() {
                 title="A clear five-step process."
               />
             </div>
-            <ol className="process-timeline mt-8 grid gap-y-2 sm:grid-cols-2 sm:gap-x-8 lg:mt-10 lg:grid-cols-5 lg:gap-x-5">
+            <ol className="process-timeline mt-8 grid gap-3 sm:grid-cols-2 lg:mt-10 lg:grid-cols-5">
               {processSteps.map((step) => (
                 <li className="process-step relative" key={step.number}>
                   <span className="process-marker" aria-hidden="true">
@@ -777,7 +779,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="border border-border bg-background p-5 shadow-[0_24px_60px_-42px_rgba(23,43,77,0.45)] sm:p-8 lg:p-9">
+              <div className="contact-form-card border border-border bg-background p-5 shadow-[0_24px_60px_-42px_rgba(23,43,77,0.45)] sm:p-8 lg:p-9">
                 <div className="mb-6 border-b border-border pb-5">
                   <h3 className="text-lg font-semibold text-primary">
                     Send an enquiry
