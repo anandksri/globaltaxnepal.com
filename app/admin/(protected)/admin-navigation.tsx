@@ -32,6 +32,7 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
     items: [
       { label: "Overview", href: "/admin", icon: LayoutDashboard },
       { label: "My tasks", href: "/admin/my-tasks", icon: CheckSquare },
+      { label: "Assign tasks", href: "/admin/tax/compliance", icon: CheckSquare },
       { label: "Business summary", href: "/admin#business-summary", icon: Building2 },
       { label: "Recent activity", href: "/admin#recent-activity", icon: Activity },
     ],
@@ -87,6 +88,7 @@ export function AdminNavigation({ admin }: { admin: AdminIdentity }) {
       {navigationSections.map((section) => {
         const items = section.items.filter(({ href }) => {
           if (!href || admin.roleName === "SUPER_ADMIN") return true;
+          if (href.startsWith("/admin/tax")) return false;
           if (href === "/admin/settings/roles") return false;
           if (href === "/admin/settings/account") return true;
           const module = requiredPermission(href);

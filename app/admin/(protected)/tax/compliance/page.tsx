@@ -18,8 +18,11 @@ export default async function CompliancePage({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-text-secondary">Track manually configured compliance tasks and due dates.</p>
-        <Link className="button button-primary" href="/admin/tax/compliance/new"><Plus aria-hidden="true" className="size-4" strokeWidth={1.75} />Add task</Link>
+        <div>
+          <h2 className="font-semibold text-primary">Assign and track staff tasks</h2>
+          <p className="mt-1 text-sm text-text-secondary">Choose a staff member, add instructions, and set a due date.</p>
+        </div>
+        <Link className="button button-primary" href="/admin/tax/compliance/new"><Plus aria-hidden="true" className="size-4" strokeWidth={1.75} />Assign new task</Link>
       </div>
       <form action="/admin/tax/compliance" className="grid gap-3 border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_12rem_auto_auto]" method="get">
         <div>

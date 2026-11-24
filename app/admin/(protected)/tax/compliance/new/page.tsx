@@ -17,7 +17,7 @@ export default async function NewComplianceTaskPage() {
     <div className="mx-auto max-w-3xl space-y-4">
       <Link className="text-sm font-medium text-secondary hover:text-primary" href="/admin/tax/compliance">← Compliance tasks</Link>
       <section className="border border-border bg-surface p-5 sm:p-7">
-        <p className="mb-5 text-sm text-text-secondary">Set a task-specific due date and category. No legal deadlines are preconfigured.</p>
+        <p className="mb-5 text-sm text-text-secondary">Select a staff member, add the task details and assignment note, then set a due date.</p>
         <ComplianceTaskForm action={createComplianceTask} clients={data.clients} documents={data.documents} staff={data.staff} />
       </section>
     </div>
