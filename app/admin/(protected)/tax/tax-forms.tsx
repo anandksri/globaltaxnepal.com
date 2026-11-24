@@ -153,9 +153,9 @@ export function ComplianceTaskForm({
           <input className="form-control" defaultValue={initial?.dueDate ?? ""} id="compliance-due-date" name="dueDate" required type="date" />
         </div>
         <div>
-          <label className="form-label" htmlFor="compliance-assignee">Assigned staff <span className="font-normal text-text-secondary">(optional)</span></label>
+          <label className="form-label" htmlFor="compliance-assignee">Assign to staff <span className="font-normal text-text-secondary">(required for staff task)</span></label>
           <select className="form-control" defaultValue={initial?.assignedToId ?? ""} id="compliance-assignee" name="assignedToId">
-            <option value="">Unassigned</option>
+            <option value="">Select a staff member</option>
             {staff.map((user) => <option key={user.id} value={user.id}>{user.name || user.email}</option>)}
           </select>
         </div>
@@ -177,8 +177,8 @@ export function ComplianceTaskForm({
           <textarea className="form-control min-h-20" defaultValue={initial?.description ?? ""} id="compliance-description" maxLength={1000} name="description" />
         </div>
         <div className="sm:col-span-2">
-          <label className="form-label" htmlFor="compliance-notes">Notes <span className="font-normal text-text-secondary">(optional)</span></label>
-          <textarea className="form-control min-h-20" defaultValue={initial?.notes ?? ""} id="compliance-notes" maxLength={5000} name="notes" />
+          <label className="form-label" htmlFor="compliance-notes">Assignment note <span className="font-normal text-text-secondary">(optional, visible to the assigned staff)</span></label>
+          <textarea className="form-control min-h-24" defaultValue={initial?.notes ?? ""} id="compliance-notes" maxLength={5000} name="notes" placeholder="Add instructions or context for the assigned staff member" />
         </div>
         <DocumentSelect documents={documents} initial={initial?.documentIds} />
       </div>

@@ -5,13 +5,13 @@ import { z } from "zod";
 import { updateComplianceTask } from "../../../actions";
 import { ComplianceTaskForm } from "../../../tax-forms";
 import { getComplianceFormData } from "@/lib/admin/tax";
-import { requirePermission } from "@/lib/admin/auth";
+import { requireSuperAdmin } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Edit compliance task" };
 export const dynamic = "force-dynamic";
 
 export default async function EditComplianceTaskPage({ params }: { params: Promise<{ id: string }> }) {
-  await requirePermission("TAX", "EDIT");
+  await requireSuperAdmin();
   const { id } = await params;
   const parsed = z.string().min(1).max(191).safeParse(id);
   if (!parsed.success) notFound();

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import nodemailer from "nodemailer";
 import { z } from "zod";
-import { requirePermission } from "@/lib/admin/auth";
+import { requirePermission, requireSuperAdmin } from "@/lib/admin/auth";
 import { isDocumentForClient } from "@/lib/admin/tax";
 import { prisma } from "@/lib/prisma";
 
@@ -299,7 +299,7 @@ export async function createComplianceTask(
   _state: TaxActionState,
   formData: FormData,
 ): Promise<TaxActionState> {
-  const admin = await requirePermission("TAX", "CREATE");
+  const admin = await requireSuperAdmin();
   const parsed = readTask(formData);
   if (!parsed.success) return { error: "Review the highlighted fields and try again.", fieldErrors: fieldErrors(parsed.error.issues) };
   let taskId: string;
@@ -378,7 +378,7 @@ export async function updateComplianceTask(
   _state: TaxActionState,
   formData: FormData,
 ): Promise<TaxActionState> {
-  const admin = await requirePermission("TAX", "EDIT");
+  const admin = await requireSuperAdmin();
   const id = z.string().min(1).max(191).safeParse(taskId);
   const parsed = readTask(formData);
   if (!id.success) return { error: "This compliance task could not be found." };

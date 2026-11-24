@@ -50,6 +50,7 @@ export async function loginAdmin(
     email: string;
     passwordHash: string;
     isActive: boolean;
+    role: { name: string };
   } | null;
   let passwordMatches: boolean;
 
@@ -61,6 +62,7 @@ export async function loginAdmin(
         email: true,
         passwordHash: true,
         isActive: true,
+        role: { select: { name: true } },
       },
     });
 
@@ -82,7 +84,11 @@ export async function loginAdmin(
 
   const code = generateTwoFactorCode();
   try {
-    await sendAdminTwoFactorCode(process.env.ADMIN_2FA_EMAIL?.trim() || user.email, code);
+    const codeEmail =
+      user.role.name === "SUPER_ADMIN"
+        ? process.env.ADMIN_2FA_EMAIL?.trim() || user.email
+        : user.email;
+    await sendAdminTwoFactorCode(codeEmail, code);
   } catch (error) {
     const errorCode =
       typeof error === "object" &&

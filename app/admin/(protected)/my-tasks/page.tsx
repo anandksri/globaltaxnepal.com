@@ -72,6 +72,16 @@ export default async function MyTasksPage() {
                   {task.description}
                 </p>
               )}
+              {task.notes && (
+                <div className="mt-4 border-l-2 border-secondary bg-background px-3 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-secondary">
+                    Admin assignment note
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-text-secondary">
+                    {task.notes}
+                  </p>
+                </div>
+              )}
               <dl className="mt-4 border-t border-border pt-4">
                 <dt className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
                   Due date
