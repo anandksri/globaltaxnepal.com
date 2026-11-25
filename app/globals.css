@@ -305,6 +305,28 @@ header {
   font-size: var(--text-supporting);
 }
 
+.admin-sidebar-scrollbar {
+  scrollbar-color: rgb(255 255 255 / 30%) transparent;
+  scrollbar-width: thin;
+}
+
+.admin-sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 30%);
+}
+
+.admin-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 255 255 / 55%);
+}
+
 .admin-filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));

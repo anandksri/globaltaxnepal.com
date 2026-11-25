@@ -48,7 +48,7 @@ export function AdminShell({ admin, notifications, children }: AdminShellProps) 
             </span>
           </span>
         </a>
-        <div className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-3 py-5">
+        <div className="admin-sidebar-scrollbar min-h-0 flex-1 overscroll-contain overflow-y-auto px-3 py-5">
           <AdminNavigation admin={admin} />
         </div>
         <div className="border-t border-white/10 p-4 text-xs leading-5 text-white/55">
