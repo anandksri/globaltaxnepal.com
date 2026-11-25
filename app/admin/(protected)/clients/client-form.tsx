@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { Plus, Upload, X } from "lucide-react";
 import { useActionState, useRef, useState } from "react";
 import type { ClientActionState } from "./actions";
 
@@ -49,6 +49,18 @@ const emptyValues: ClientFormValues = {
   notes: "",
   isActive: true,
 };
+
+const documentUploadCategories = [
+  { value: "PAN_CERTIFICATE", label: "PAN" },
+  { value: "SUPPORTING_DOCUMENT", label: "Certificate" },
+  { value: "OTHER", label: "Others" },
+] as const;
+const maxClientDocumentCount = 10;
+const maxDocumentInputSlots =
+  documentUploadCategories.length + maxClientDocumentCount - 1;
+
+type DocumentUploadCategory = (typeof documentUploadCategories)[number]["value"];
+type DocumentUploadSlot = { id: number; category: DocumentUploadCategory };
 
 type ClientFormProps = {
   action: (
@@ -134,8 +146,16 @@ export function ClientForm({
   const [vatRegistered, setVatRegistered] = useState(
     initialValues.vatRegistered,
   );
-  const [documentInputIds, setDocumentInputIds] = useState([0]);
-  const nextDocumentInputId = useRef(1);
+  const [documentInputs, setDocumentInputs] = useState<DocumentUploadSlot[]>(
+    documentUploadCategories.map((category, id) => ({
+      id,
+      category: category.value,
+    })),
+  );
+  const [selectedDocumentFiles, setSelectedDocumentFiles] = useState<
+    Record<number, string>
+  >({});
+  const nextDocumentInputId = useRef(documentUploadCategories.length);
 
   return (
     <form action={formAction} className="space-y-7">
@@ -146,6 +166,180 @@ export function ClientForm({
         >
           Client details
         </h2>
+        {allowDocumentUpload && (
+          <div className="mt-4">
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="text-sm font-semibold text-primary">
+                Client documents
+              </h3>
+              <p className="text-xs text-text-secondary">
+                Up to 10 files and 10 MB total
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {documentUploadCategories.map(({ value, label }) => {
+                const categorySlots = documentInputs.filter(
+                  (slot) => slot.category === value,
+                );
+                return (
+                  <div
+                    className="flex min-w-0 flex-col border border-border bg-background p-4"
+                    key={value}
+                  >
+                    <h4 className="mb-3 text-sm font-semibold text-primary">
+                      {label}
+                    </h4>
+                    <div className="space-y-3">
+                      {categorySlots.map((slot) => {
+                        const selectedFile = selectedDocumentFiles[slot.id];
+                        return (
+                          <div className="space-y-2" key={slot.id}>
+                            <input
+                              name="documentCategories"
+                              type="hidden"
+                              value={slot.category}
+                            />
+                            <div className="flex items-start gap-2">
+                              <label
+                                className="flex min-h-28 min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-secondary/50 bg-surface px-3 py-4 text-center transition-colors hover:border-secondary hover:bg-secondary/5"
+                                htmlFor={`client-documentFile-${slot.id}`}
+                              >
+                                <Upload
+                                  aria-hidden="true"
+                                  className="size-5 text-secondary"
+                                />
+                                <span className="max-w-full break-all text-sm font-medium text-primary">
+                                  {selectedFile ?? `Click to upload ${label}`}
+                                </span>
+                                <span className="text-xs text-text-secondary">
+                                  PDF, JPG, PNG, or WebP
+                                </span>
+                                <input
+                                  accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                                  aria-label={`${label} document file`}
+                                  aria-invalid={Boolean(state.fieldErrors?.documentFile)}
+                                  className="sr-only"
+                                  id={`client-documentFile-${slot.id}`}
+                                  name="documentFiles"
+                                  onChange={(event) => {
+                                    const fileName = event.currentTarget.files?.[0]?.name;
+                                    if (fileName) {
+                                      setSelectedDocumentFiles((current) => ({
+                                        ...current,
+                                        [slot.id]: fileName,
+                                      }));
+                                    }
+                                  }}
+                                  type="file"
+                                />
+                              </label>
+                              {categorySlots.length > 1 && (
+                                <button
+                                  aria-label={`Remove ${label} file`}
+                                  className="button button-secondary !px-2.5"
+                                  onClick={() =>
+                                    setDocumentInputs((current) =>
+                                      current.filter(({ id }) => id !== slot.id),
+                                    )
+                                  }
+                                  type="button"
+                                >
+                                  <X aria-hidden="true" size={16} />
+                                </button>
+                              )}
+                            </div>
+                            {selectedFile ? (
+                              <div className="space-y-2">
+                                <label
+                                  className="form-label"
+                                  htmlFor={`client-documentTitle-${slot.id}`}
+                                >
+                                  Name of file
+                                </label>
+                                <input
+                                  className="form-control"
+                                  id={`client-documentTitle-${slot.id}`}
+                                  maxLength={200}
+                                  name="documentTitles"
+                                  placeholder="Optional name"
+                                  type="text"
+                                />
+                                <label
+                                  className="form-label"
+                                  htmlFor={`client-documentDate-${slot.id}`}
+                                >
+                                  Attachment date
+                                </label>
+                                <input
+                                  className="form-control"
+                                  id={`client-documentDate-${slot.id}`}
+                                  name="documentDates"
+                                  type="date"
+                                />
+                              </div>
+                            ) : (
+                              <>
+                                <input
+                                  name="documentTitles"
+                                  type="hidden"
+                                  value=""
+                                />
+                                <input
+                                  name="documentDates"
+                                  type="hidden"
+                                  value=""
+                                />
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button
+                      className="mt-auto inline-flex min-h-10 items-center gap-1.5 pt-3 text-sm font-medium text-secondary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={documentInputs.length >= maxDocumentInputSlots}
+                      onClick={() => {
+                        const id = nextDocumentInputId.current;
+                        nextDocumentInputId.current += 1;
+                        setDocumentInputs((current) => [
+                          ...current,
+                          { id, category: value },
+                        ]);
+                      }}
+                      type="button"
+                    >
+                      <Plus aria-hidden="true" size={17} />
+                      Add {label} file
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            {state.fieldErrors?.documentFile && (
+              <FieldError message={state.fieldErrors.documentFile} />
+            )}
+            {state.fieldErrors?.documentMetadata && (
+              <FieldError message={state.fieldErrors.documentMetadata} />
+            )}
+            <div className="mt-4">
+              <label className="form-label" htmlFor="client-documentNote">
+                Document note{" "}
+                <span className="font-normal text-text-secondary">
+                  (optional; applies to all uploaded documents)
+                </span>
+              </label>
+              <textarea
+                aria-invalid={Boolean(state.fieldErrors?.documentNote)}
+                className="form-control min-h-20 resize-y"
+                id="client-documentNote"
+                maxLength={1000}
+                name="documentNote"
+                rows={3}
+              />
+              <FieldError message={state.fieldErrors?.documentNote} />
+            </div>
+          </div>
+        )}
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <div>
             <label className="form-label" htmlFor="client-type">
@@ -400,134 +594,6 @@ export function ClientForm({
           </div>
         </div>
       </section>
-
-      {allowDocumentUpload && (
-        <section aria-labelledby="client-document-heading">
-          <h2
-            className="border-b border-border pb-3 text-base font-semibold text-primary"
-            id="client-document-heading"
-          >
-            Document upload
-          </h2>
-          <p className="mt-3 text-sm text-text-secondary">
-            Add up to 10 PAN certificates, certificates, or other documents. The combined upload limit is 10 MB.
-          </p>
-          <div className="mt-4 space-y-4">
-            {documentInputIds.map((inputId, index) => (
-              <div
-                className="border border-border p-4 sm:p-5"
-                key={inputId}
-              >
-                <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
-                  <h3 className="text-sm font-semibold text-primary">
-                    Document {index + 1}
-                  </h3>
-                  {documentInputIds.length > 1 && (
-                    <button
-                      aria-label={`Remove document ${index + 1}`}
-                      className="button button-secondary !px-3"
-                      onClick={() =>
-                        setDocumentInputIds((current) =>
-                          current.filter((id) => id !== inputId),
-                        )
-                      }
-                      type="button"
-                    >
-                      <X aria-hidden="true" size={18} />
-                    </button>
-                  )}
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="form-label" htmlFor={`client-documentTitle-${inputId}`}>
-                      Name of file
-                    </label>
-                    <input
-                      className="form-control"
-                      id={`client-documentTitle-${inputId}`}
-                      maxLength={200}
-                      name="documentTitles"
-                      placeholder="Defaults to the selected file name"
-                      type="text"
-                    />
-                  </div>
-                  <div>
-                    <label className="form-label" htmlFor={`client-documentCategory-${inputId}`}>
-                      Document type
-                    </label>
-                    <select
-                      className="form-control"
-                      defaultValue="OTHER"
-                      id={`client-documentCategory-${inputId}`}
-                      name="documentCategories"
-                    >
-                      <option value="PAN_CERTIFICATE">PAN</option>
-                      <option value="SUPPORTING_DOCUMENT">Certificate</option>
-                      <option value="OTHER">Others</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="form-label" htmlFor={`client-documentFile-${inputId}`}>
-                      Attachment
-                      <span className="font-normal text-text-secondary"> (PDF, JPG, PNG, WebP)</span>
-                    </label>
-                    <input
-                      accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                      aria-invalid={Boolean(state.fieldErrors?.documentFile)}
-                      className="form-control file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
-                      id={`client-documentFile-${inputId}`}
-                      name="documentFiles"
-                      type="file"
-                    />
-                    <FieldError message={state.fieldErrors?.documentFile} />
-                  </div>
-                  <div>
-                    <label className="form-label" htmlFor={`client-documentDate-${inputId}`}>
-                      Attachment date
-                    </label>
-                    <input
-                      className="form-control"
-                      id={`client-documentDate-${inputId}`}
-                      name="documentDates"
-                      type="date"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-            <button
-              className="button button-secondary"
-              disabled={documentInputIds.length >= 10}
-              onClick={() => {
-                const inputId = nextDocumentInputId.current;
-                nextDocumentInputId.current += 1;
-                setDocumentInputIds((current) => [...current, inputId]);
-              }}
-              type="button"
-            >
-              <Plus aria-hidden="true" size={18} />
-              Add another document
-            </button>
-            {state.fieldErrors?.documentMetadata && (
-              <FieldError message={state.fieldErrors.documentMetadata} />
-            )}
-          </div>
-          <div className="mt-5">
-            <label className="form-label" htmlFor="client-documentNote">
-              Document note <span className="font-normal text-text-secondary">(optional; applies to all uploaded documents)</span>
-            </label>
-            <textarea
-              aria-invalid={Boolean(state.fieldErrors?.documentNote)}
-              className="form-control min-h-24 resize-y"
-              id="client-documentNote"
-              maxLength={1000}
-              name="documentNote"
-              rows={3}
-            />
-            <FieldError message={state.fieldErrors?.documentNote} />
-          </div>
-        </section>
-      )}
 
       {state.error && (
         <p
