@@ -1,10 +1,17 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
+import { DocumentCategory, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { requirePermission } from "@/lib/admin/auth";
 import { clientIdSchema, getClientFormData } from "@/lib/admin/clients";
+import {
+  maxDocumentSize,
+  removeStoredDocument,
+  storeDocument,
+  validateDocumentBytes,
+} from "@/lib/admin/document-storage";
 import { prisma } from "@/lib/prisma";
 
 export type ClientActionState = {
@@ -24,6 +31,17 @@ function getFieldErrors(issues: { path: PropertyKey[]; message: string }[]) {
 
   return fieldErrors;
 }
+
+const optionalDocumentText = (max: number) =>
+  z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().max(max).optional(),
+  );
+
+const clientDocumentSchema = z.object({
+  title: optionalDocumentText(200),
+  note: optionalDocumentText(1000),
+});
 
 function getClientData(data: NonNullable<ReturnType<typeof getClientFormData>["data"]>) {
   return {
@@ -62,14 +80,134 @@ export async function createClient(
     };
   }
 
+  const parsedDocument = clientDocumentSchema.safeParse({
+    title: formData.get("documentTitle"),
+    note: formData.get("documentNote"),
+  });
+  if (!parsedDocument.success) {
+    return {
+      error: "Review the highlighted document fields and try again.",
+      fieldErrors: getFieldErrors(
+        parsedDocument.error.issues.map((issue) => ({
+          ...issue,
+          path: [issue.path[0] === "title" ? "documentTitle" : "documentNote"],
+        })),
+      ),
+    };
+  }
+
+  const fileValue = formData.get("documentFile");
+  if (fileValue instanceof File && fileValue.name !== "") {
+    await requirePermission("DOCUMENTS", "CREATE");
+  }
+
+  let uploadedDocument:
+    | {
+        title: string;
+        note: string | null;
+        originalName: string;
+        storageKey: string;
+        mimeType: string;
+        bytes: Buffer;
+      }
+    | undefined;
+
+  if (fileValue !== null && !(fileValue instanceof File)) {
+    return {
+      error: "Choose a valid document file.",
+      fieldErrors: { documentFile: "Choose a valid document file." },
+    };
+  }
+
+  if (fileValue instanceof File && fileValue.name !== "") {
+    if (fileValue.size === 0) {
+      return {
+        error: "Choose a non-empty document file.",
+        fieldErrors: { documentFile: "The selected file is empty." },
+      };
+    }
+    if (fileValue.size > maxDocumentSize) {
+      return {
+        error: "The document must be no larger than 10 MB.",
+        fieldErrors: { documentFile: "The document must be no larger than 10 MB." },
+      };
+    }
+
+    const originalName = fileValue.name.replaceAll("\\", "/").split("/").pop()?.trim() ?? "";
+    if (!originalName || originalName.length > 255) {
+      return {
+        error: "The document file name is invalid or too long.",
+        fieldErrors: { documentFile: "The file name is invalid or too long." },
+      };
+    }
+
+    const bytes = Buffer.from(await fileValue.arrayBuffer());
+    const validatedFile = validateDocumentBytes(originalName, fileValue.type, bytes);
+    if (!validatedFile) {
+      return {
+        error: "Use a matching PDF, JPG, PNG, or WebP file.",
+        fieldErrors: {
+          documentFile: "The file contents must match its PDF, JPG, PNG, or WebP type.",
+        },
+      };
+    }
+
+    const defaultTitle =
+      originalName.replace(/\.[^.]+$/, "").trim().slice(0, 200) ||
+      originalName.slice(0, 200);
+    uploadedDocument = {
+      title: parsedDocument.data.title ?? defaultTitle,
+      note: parsedDocument.data.note ?? null,
+      originalName,
+      storageKey: validatedFile.storageKey,
+      mimeType: validatedFile.mimeType,
+      bytes,
+    };
+  }
+
   let clientId: string;
 
   try {
+    if (uploadedDocument) {
+      await storeDocument(uploadedDocument.storageKey, uploadedDocument.bytes);
+    }
+
     const client = await prisma.$transaction(async (transaction) => {
       const created = await transaction.client.create({
         data: getClientData(parsed.data),
         select: { id: true },
       });
+
+      if (uploadedDocument) {
+        const document = await transaction.document.create({
+          data: {
+            title: uploadedDocument.title,
+            category: DocumentCategory.OTHER,
+            description: uploadedDocument.note,
+            clientId: created.id,
+            originalName: uploadedDocument.originalName,
+            storageKey: uploadedDocument.storageKey,
+            mimeType: uploadedDocument.mimeType,
+            fileSize: uploadedDocument.bytes.byteLength,
+            uploadedById: admin.id,
+          },
+          select: { id: true },
+        });
+
+        await transaction.activityLog.create({
+          data: {
+            actorId: admin.id,
+            action: "DOCUMENT_UPLOADED",
+            targetType: "Document",
+            targetId: document.id,
+            metadata: {
+              title: uploadedDocument.title,
+              category: DocumentCategory.OTHER,
+              fileSize: uploadedDocument.bytes.byteLength,
+            },
+          },
+        });
+      }
 
       await transaction.activityLog.create({
         data: {
@@ -84,6 +222,16 @@ export async function createClient(
     });
     clientId = client.id;
   } catch (error) {
+    if (uploadedDocument) {
+      try {
+        await removeStoredDocument(uploadedDocument.storageKey);
+      } catch (cleanupError) {
+        console.error("[admin-clients] Failed to remove an unregistered client document.", {
+          name: cleanupError instanceof Error ? cleanupError.name : "UnknownError",
+        });
+      }
+    }
+
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"

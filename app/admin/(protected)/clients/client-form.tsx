@@ -48,6 +48,7 @@ type ClientFormProps = {
   ) => Promise<ClientActionState>;
   initialValues?: ClientFormValues;
   submitLabel: string;
+  allowDocumentUpload?: boolean;
 };
 
 function FieldError({ message }: { message?: string }) {
@@ -115,6 +116,7 @@ export function ClientForm({
   action,
   initialValues = emptyValues,
   submitLabel,
+  allowDocumentUpload = false,
 }: ClientFormProps) {
   const [state, formAction, isPending] = useActionState(action, {});
   const [clientType, setClientType] = useState(initialValues.type);
@@ -335,6 +337,67 @@ export function ClientForm({
           </div>
         </div>
       </section>
+
+      {allowDocumentUpload && (
+        <section aria-labelledby="client-document-heading">
+          <h2
+            className="border-b border-border pb-3 text-base font-semibold text-primary"
+            id="client-document-heading"
+          >
+            Add a document
+          </h2>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="form-label" htmlFor="client-documentFile">
+                Document file{" "}
+                <span className="font-normal text-text-secondary">
+                  (PDF, JPG, PNG, or WebP; up to 10 MB; optional)
+                </span>
+              </label>
+              <input
+                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                aria-invalid={Boolean(state.fieldErrors?.documentFile)}
+                className="form-control file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+                id="client-documentFile"
+                name="documentFile"
+                type="file"
+              />
+              <FieldError message={state.fieldErrors?.documentFile} />
+            </div>
+            <div>
+              <label className="form-label" htmlFor="client-documentTitle">
+                Document name{" "}
+                <span className="font-normal text-text-secondary">
+                  (optional; defaults to the file name)
+                </span>
+              </label>
+              <input
+                aria-invalid={Boolean(state.fieldErrors?.documentTitle)}
+                className="form-control"
+                id="client-documentTitle"
+                maxLength={200}
+                name="documentTitle"
+                type="text"
+              />
+              <FieldError message={state.fieldErrors?.documentTitle} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="form-label" htmlFor="client-documentNote">
+                Document note <span className="font-normal text-text-secondary">(optional)</span>
+              </label>
+              <textarea
+                aria-invalid={Boolean(state.fieldErrors?.documentNote)}
+                className="form-control min-h-24 resize-y"
+                id="client-documentNote"
+                maxLength={1000}
+                name="documentNote"
+                rows={3}
+              />
+              <FieldError message={state.fieldErrors?.documentNote} />
+            </div>
+          </div>
+        </section>
+      )}
 
       {state.error && (
         <p

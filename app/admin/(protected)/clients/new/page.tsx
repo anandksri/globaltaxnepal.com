@@ -2,12 +2,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "../actions";
 import { ClientForm } from "../client-form";
+import { AdminModule, PermissionAction } from "@prisma/client";
 import { requirePermission } from "@/lib/admin/auth";
 
 export const metadata: Metadata = { title: "Add client" };
 
 export default async function NewClientPage() {
-  await requirePermission("CLIENTS", "CREATE");
+  const admin = await requirePermission("CLIENTS", "CREATE");
+  const canCreateDocuments =
+    admin.roleName === "SUPER_ADMIN" ||
+    admin.permissions.some(
+      (permission) =>
+        permission.module === AdminModule.DOCUMENTS &&
+        permission.action === PermissionAction.CREATE,
+    );
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-6">
@@ -22,7 +30,11 @@ export default async function NewClientPage() {
         </p>
       </div>
       <section className="border border-border bg-surface p-5 sm:p-7">
-        <ClientForm action={createClient} submitLabel="Create client" />
+        <ClientForm
+          action={createClient}
+          allowDocumentUpload={canCreateDocuments}
+          submitLabel="Create client"
+        />
       </section>
     </div>
   );
