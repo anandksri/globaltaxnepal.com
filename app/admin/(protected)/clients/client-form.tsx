@@ -78,6 +78,7 @@ function TextField({
   autoComplete,
   error,
   inputMode,
+  className,
 }: {
   name: keyof ClientFormValues;
   label: string;
@@ -88,11 +89,12 @@ function TextField({
   autoComplete?: string;
   error?: string;
   inputMode?: "numeric";
+  className?: string;
 }) {
   const id = `client-${name}`;
 
   return (
-    <div>
+    <div className={className}>
       <label className="form-label" htmlFor={id}>
         {label}
         {required && <span aria-hidden="true"> *</span>}
@@ -197,6 +199,7 @@ export function ClientForm({
             name="phone"
             type="tel"
             autoComplete="tel"
+            className={clientType === "INDIVIDUAL" ? "sm:col-span-2" : undefined}
           />
           {clientType === "BUSINESS" && (
             <TextField
@@ -240,6 +243,7 @@ export function ClientForm({
             label="Firm name"
             maxLength={200}
             name="additionalContactFirmName"
+            className="sm:col-span-2"
           />
           <div className="sm:col-span-2">
             <label className="form-label" htmlFor="client-additionalContactAddress">
@@ -411,64 +415,13 @@ export function ClientForm({
           <div className="mt-4 space-y-4">
             {documentInputIds.map((inputId, index) => (
               <div
-                className="grid gap-4 border border-border p-4 sm:grid-cols-2"
+                className="border border-border p-4 sm:p-5"
                 key={inputId}
               >
-                <div>
-                  <label className="form-label" htmlFor={`client-documentTitle-${inputId}`}>
-                    Name of file
-                  </label>
-                  <input
-                    className="form-control"
-                    id={`client-documentTitle-${inputId}`}
-                    maxLength={200}
-                    name="documentTitles"
-                    placeholder="Defaults to the selected file name"
-                    type="text"
-                  />
-                </div>
-                <div>
-                  <label className="form-label" htmlFor={`client-documentCategory-${inputId}`}>
-                    Document type
-                  </label>
-                  <select
-                    className="form-control"
-                    defaultValue="OTHER"
-                    id={`client-documentCategory-${inputId}`}
-                    name="documentCategories"
-                  >
-                    <option value="PAN_CERTIFICATE">PAN</option>
-                    <option value="SUPPORTING_DOCUMENT">Certificate</option>
-                    <option value="OTHER">Others</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label" htmlFor={`client-documentFile-${inputId}`}>
-                    Attachment
-                    <span className="font-normal text-text-secondary"> (PDF, JPG, PNG, WebP)</span>
-                  </label>
-                  <input
-                    accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                    aria-invalid={Boolean(state.fieldErrors?.documentFile)}
-                    className="form-control file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
-                    id={`client-documentFile-${inputId}`}
-                    name="documentFiles"
-                    type="file"
-                  />
-                  <FieldError message={state.fieldErrors?.documentFile} />
-                </div>
-                <div className="flex items-end gap-2">
-                  <div className="min-w-0 flex-1">
-                    <label className="form-label" htmlFor={`client-documentDate-${inputId}`}>
-                      Attachment date
-                    </label>
-                    <input
-                      className="form-control"
-                      id={`client-documentDate-${inputId}`}
-                      name="documentDates"
-                      type="date"
-                    />
-                  </div>
+                <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
+                  <h3 className="text-sm font-semibold text-primary">
+                    Document {index + 1}
+                  </h3>
                   {documentInputIds.length > 1 && (
                     <button
                       aria-label={`Remove document ${index + 1}`}
@@ -483,6 +436,62 @@ export function ClientForm({
                       <X aria-hidden="true" size={18} />
                     </button>
                   )}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="form-label" htmlFor={`client-documentTitle-${inputId}`}>
+                      Name of file
+                    </label>
+                    <input
+                      className="form-control"
+                      id={`client-documentTitle-${inputId}`}
+                      maxLength={200}
+                      name="documentTitles"
+                      placeholder="Defaults to the selected file name"
+                      type="text"
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label" htmlFor={`client-documentCategory-${inputId}`}>
+                      Document type
+                    </label>
+                    <select
+                      className="form-control"
+                      defaultValue="OTHER"
+                      id={`client-documentCategory-${inputId}`}
+                      name="documentCategories"
+                    >
+                      <option value="PAN_CERTIFICATE">PAN</option>
+                      <option value="SUPPORTING_DOCUMENT">Certificate</option>
+                      <option value="OTHER">Others</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="form-label" htmlFor={`client-documentFile-${inputId}`}>
+                      Attachment
+                      <span className="font-normal text-text-secondary"> (PDF, JPG, PNG, WebP)</span>
+                    </label>
+                    <input
+                      accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                      aria-invalid={Boolean(state.fieldErrors?.documentFile)}
+                      className="form-control file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+                      id={`client-documentFile-${inputId}`}
+                      name="documentFiles"
+                      type="file"
+                    />
+                    <FieldError message={state.fieldErrors?.documentFile} />
+                  </div>
+                  <div>
+                    <label className="form-label" htmlFor={`client-documentDate-${inputId}`}>
+                      Attachment date
+                    </label>
+                    <input
+                      className="form-control"
+                      id={`client-documentDate-${inputId}`}
+                      name="documentDates"
+                      type="date"
+                    />
+                  </div>
                 </div>
               </div>
             ))}
