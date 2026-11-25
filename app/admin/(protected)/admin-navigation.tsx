@@ -61,6 +61,7 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
     items: [
       { label: "Company profile", href: "/admin/settings", icon: Building2 },
       { label: "Staff management", href: "/admin/settings/staff", icon: Users },
+      { label: "Staff salary register", href: "/admin/settings/staff/salary", icon: BookOpenCheck },
       { label: "Roles and permissions", href: "/admin/settings/roles", icon: Settings },
       { label: "Account settings", href: "/admin/settings/account", icon: CircleUserRound },
     ],
@@ -78,7 +79,7 @@ function requiredPermission(href: string) {
   if (href.startsWith("/admin/tax")) return AdminModule.TAX;
   if (href.startsWith("/admin/reports")) return AdminModule.REPORTS;
   if (href === "/admin/settings") return AdminModule.SETTINGS;
-  if (href === "/admin/settings/staff") return AdminModule.STAFF_MANAGEMENT;
+  if (href.startsWith("/admin/settings/staff")) return AdminModule.STAFF_MANAGEMENT;
   if (href === "/admin/settings/roles") return null;
   if (href === "/admin/settings/account") return null;
   return AdminModule.DASHBOARD;
@@ -112,7 +113,8 @@ export function AdminNavigation({ admin }: { admin: AdminIdentity }) {
           </h2>
           <ul className="mt-1.5 space-y-0.5">
             {items.map(({ href, icon: Icon, label }) => {
-              const isActive = href === "/admin/clients" && pathname.startsWith("/admin/clients/monthly-data")
+              const isActive = (href === "/admin/clients" && pathname.startsWith("/admin/clients/monthly-data")) ||
+                (href === "/admin/settings/staff" && pathname.startsWith("/admin/settings/staff/salary"))
                 ? false
                 : href === "/admin"
                 ? pathname === "/admin"

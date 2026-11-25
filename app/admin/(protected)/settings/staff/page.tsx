@@ -21,7 +21,10 @@ export default async function StaffPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-text-secondary">Manage existing staff accounts. Passwords are never displayed or retrieved.</p>
-        {canCreate && <Link className="button button-primary" href="/admin/settings/staff/new"><Plus aria-hidden="true" className="size-4" strokeWidth={1.75} />Add staff member</Link>}
+        <div className="flex flex-wrap gap-2">
+          <Link className="button button-secondary" href="/admin/settings/staff/salary">Salary register</Link>
+          {canCreate && <Link className="button button-primary" href="/admin/settings/staff/new"><Plus aria-hidden="true" className="size-4" strokeWidth={1.75} />Add staff member</Link>}
+        </div>
       </div>
       <section className="overflow-hidden border border-border bg-surface">
         {users.length === 0 ? <div className="px-5 py-12 text-center"><h2 className="font-semibold text-primary">No staff accounts</h2><p className="mt-1 text-sm text-text-secondary">Add a staff member to begin.</p></div> : (

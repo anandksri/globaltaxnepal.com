@@ -134,6 +134,7 @@ model User {
   assignedStudentRegistrations StudentRegistration[] @relation("StudentRegistrationAssignedTo")
   officeRegisters OfficeRegister[] @relation("OfficeRegisterCreatedBy")
   officeRegisterStaff OfficeRegisterStaff[]
+  salaryYears StaffSalaryYear[]
   invitations UserInvitation[] @relation("InvitationRecipient")
   createdInvitations UserInvitation[] @relation("InvitationCreatedBy")
   notifications Notification[]
@@ -143,6 +144,33 @@ model User {
 
   @@index([roleId])
   @@index([isActive])
+}
+
+model ManualSalaryStaff {
+  id          String @id @default(cuid())
+  name        String @db.VarChar(100)
+  phone       String? @db.VarChar(40)
+  email       String? @db.VarChar(254)
+  address     String? @db.VarChar(500)
+  designation String? @db.VarChar(150)
+  salaryYears StaffSalaryYear[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StaffSalaryYear {
+  id            String @id @default(cuid())
+  userId        String?
+  user          User? @relation(fields: [userId], references: [id], onDelete: NoAction)
+  manualStaffId String?
+  manualStaff   ManualSalaryStaff? @relation(fields: [manualStaffId], references: [id], onDelete: NoAction)
+  year          Int
+  amounts       Json
+  remarks       String? @db.Text
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, year])
+  @@unique([manualStaffId, year])
 }
 
 model Notification {

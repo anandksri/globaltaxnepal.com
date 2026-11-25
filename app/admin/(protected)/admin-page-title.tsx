@@ -110,6 +110,8 @@ export function AdminPageTitle() {
     title = "Tax and compliance reports";
   } else if (pathname === "/admin/settings") {
     title = "Company settings";
+  } else if (pathname.startsWith("/admin/settings/staff/salary")) {
+    title = "Staff salary register";
   } else if (pathname === "/admin/settings/staff") {
     title = "Staff management";
   } else if (pathname === "/admin/settings/staff/new") {
