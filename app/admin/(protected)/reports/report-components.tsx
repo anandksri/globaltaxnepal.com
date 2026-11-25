@@ -31,7 +31,7 @@ export function ReportFilters({
   showClient?: boolean;
 }) {
   return (
-    <form action={action} className="grid gap-3 border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(9rem,1fr))_auto_auto]" method="get">
+    <form action={action} className="admin-filter-grid border border-border bg-surface p-4" method="get">
       {showSearch && <div><label className="form-label" htmlFor={`${action}-search`}>Search clients</label><input className="form-control" defaultValue={q} id={`${action}-search`} maxLength={100} name="q" type="search" /></div>}
       {showClient && <div><label className="form-label" htmlFor={`${action}-client`}>Client</label><select className="form-control" defaultValue={clientId} id={`${action}-client`} name="client"><option value="">All clients</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.displayName}</option>)}</select></div>}
       {showStatus && <div><label className="form-label" htmlFor={`${action}-status`}>Bill status</label><select className="form-control" defaultValue={status} id={`${action}-status`} name="status"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="ISSUED">Issued</option><option value="PARTIALLY_PAID">Partially paid</option><option value="PAID">Paid</option><option value="CANCELLED">Cancelled</option></select></div>}

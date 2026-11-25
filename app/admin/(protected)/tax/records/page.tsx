@@ -19,7 +19,7 @@ export default async function TaxRecordsPage({
         <p className="text-sm text-text-secondary">Track client tax periods, filing progress, and manually entered due dates.</p>
         <Link className="button button-primary" href="/admin/tax/records/new"><Plus aria-hidden="true" className="size-4" strokeWidth={1.75} />Add tax record</Link>
       </div>
-      <form action="/admin/tax/records" className="grid gap-3 border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_auto_auto]" method="get">
+      <form action="/admin/tax/records" className="admin-filter-grid border border-border bg-surface p-4" method="get">
         <div>
           <label className="form-label" htmlFor="tax-record-search">Search</label>
           <input className="form-control" defaultValue={result.q} id="tax-record-search" maxLength={100} name="q" placeholder="Client, PAN, tax type, or period" type="search" />

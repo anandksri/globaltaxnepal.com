@@ -97,7 +97,7 @@ export default async function ClientsPage({
 
       <form
         action="/admin/clients"
-        className="grid gap-3 border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_12rem_auto_auto]"
+        className="admin-filter-grid border border-border bg-surface p-4"
         method="get"
       >
         <div>

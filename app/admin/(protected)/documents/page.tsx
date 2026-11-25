@@ -44,7 +44,7 @@ export default async function DocumentsPage({
         </div>
       </section>
 
-      <form action="/admin/documents" className="grid gap-3 border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_12rem_9rem_9rem_auto_auto]" method="get">
+      <form action="/admin/documents" className="admin-filter-grid border border-border bg-surface p-4" method="get">
         <div>
           <label className="form-label" htmlFor="document-search">Search documents</label>
           <input className="form-control" defaultValue={result.q} id="document-search" maxLength={100} name="q" placeholder="Title, file name, or client" type="search" />

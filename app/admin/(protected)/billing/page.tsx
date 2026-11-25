@@ -88,7 +88,7 @@ export default async function BillingPage({
       </section>
 
       <section className="border border-border bg-surface">
-        <form action="/admin/billing" className="grid gap-3 border-b border-border p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_10rem_9rem_9rem_auto] lg:items-end" method="get">
+        <form action="/admin/billing" className="admin-filter-grid border-b border-border p-4" method="get">
           {filters.clientId && <input name="client" type="hidden" value={filters.clientId} />}
           <div>
             <label className="form-label" htmlFor="bill-search">Search</label>

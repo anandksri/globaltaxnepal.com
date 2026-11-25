@@ -24,7 +24,7 @@ export default async function CompliancePage({
         </div>
         <Link className="button button-primary" href="/admin/tax/compliance/new"><Plus aria-hidden="true" className="size-4" strokeWidth={1.75} />Assign new task</Link>
       </div>
-      <form action="/admin/tax/compliance" className="grid gap-3 border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_12rem_auto_auto]" method="get">
+      <form action="/admin/tax/compliance" className="admin-filter-grid border border-border bg-surface p-4" method="get">
         <div>
           <label className="form-label" htmlFor="compliance-search">Search</label>
           <input className="form-control" defaultValue={result.q} id="compliance-search" maxLength={100} name="q" placeholder="Task, client, category, or assignee" type="search" />

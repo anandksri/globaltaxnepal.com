@@ -58,7 +58,7 @@ export default async function DetailsBillsPage({
         </Link>
       </div>
       <section className="border border-border bg-surface">
-        <form action="/admin/details-bills" className="grid gap-3 border-b border-border p-4 sm:grid-cols-[minmax(12rem,1fr)_12rem_auto] sm:items-end" method="get">
+        <form action="/admin/details-bills" className="admin-filter-grid border-b border-border p-4" method="get">
           <div>
             <label className="form-label" htmlFor="details-search">Search bill or client</label>
             <input className="form-control" defaultValue={q} id="details-search" name="q" />

@@ -62,7 +62,7 @@ export function AccountList({
           Add {label.toLowerCase()}
         </Link>
       </div>
-      <form action={basePath} className="grid gap-3 border border-border bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_12rem_10rem_10rem_auto_auto]" method="get">
+      <form action={basePath} className="admin-filter-grid border border-border bg-surface p-4" method="get">
         <div>
           <label className="form-label" htmlFor={`${type}-search`}>Search</label>
           <input className="form-control" defaultValue={q} id={`${type}-search`} maxLength={100} name="q" placeholder="Reference, name, or description" type="search" />
