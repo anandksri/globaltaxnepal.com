@@ -87,12 +87,21 @@ export function MonthlyDataForm({ action, canEdit, canUpload, clientId, dates, d
       <p className="mt-2 text-sm text-text-secondary">{manualClient ? "Select documents without a linked client." : "Select existing client documents to link."} Uploaded files are saved to Documents immediately; save this form to link them here.</p>
       {canEdit && canUpload && <div className="mt-4">
         <label className="form-label" htmlFor="monthly-upload">Add documents</label>
-        <input accept=".pdf,.jpg,.jpeg,.png,.webp" disabled={uploading || pending} id="monthly-upload" multiple onChange={(event) => {
-          const files = event.target.files;
-          void uploadFiles(files);
-          event.target.value = "";
-        }} type="file" />
-        <p className="mt-1 text-xs text-text-secondary">PDF, JPG, PNG or WebP; maximum 10 MB per file.</p>
+        <input
+          accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+          aria-describedby="monthly-upload-hint"
+          className="form-control file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white disabled:opacity-60"
+          disabled={uploading || pending}
+          id="monthly-upload"
+          multiple
+          onChange={(event) => {
+            const files = event.target.files;
+            void uploadFiles(files);
+            event.target.value = "";
+          }}
+          type="file"
+        />
+        <p className="mt-1 text-xs text-text-secondary" id="monthly-upload-hint">PDF, JPG, PNG or WebP; maximum 10 MB per file.</p>
       </div>}
       {uploading && <p className="mt-3 text-sm" role="status">Uploading documents…</p>}
       {uploadError && <p className="mt-3 text-sm text-error" role="alert">{uploadError}</p>}
