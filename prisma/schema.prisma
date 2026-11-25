@@ -132,6 +132,8 @@ model User {
   createdComplianceTasks ComplianceTask[] @relation("ComplianceTaskCreatedBy")
   createdStudentRegistrations StudentRegistration[] @relation("StudentRegistrationCreatedBy")
   assignedStudentRegistrations StudentRegistration[] @relation("StudentRegistrationAssignedTo")
+  officeRegisters OfficeRegister[] @relation("OfficeRegisterCreatedBy")
+  officeRegisterStaff OfficeRegisterStaff[]
   invitations UserInvitation[] @relation("InvitationRecipient")
   createdInvitations UserInvitation[] @relation("InvitationCreatedBy")
   notifications Notification[]
@@ -209,6 +211,7 @@ model Client {
   documents        Document[]
   taxRecords       ClientTaxRecord[]
   complianceTasks  ComplianceTask[]
+  officeRegisters OfficeRegister[]
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -216,6 +219,54 @@ model Client {
   @@index([type, createdAt])
   @@index([phone])
   @@index([isActive, createdAt])
+}
+
+model OfficeRegister {
+  id        String   @id @default(cuid())
+  kind      String   @db.VarChar(40)
+  title     String   @db.VarChar(200)
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  data      Json
+  reportDate DateTime? @db.Date
+  createdById String
+  createdBy User     @relation("OfficeRegisterCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  staff     OfficeRegisterStaff[]
+  tasks     OfficeRegisterTask[]
+  documents OfficeRegisterDocument[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind, createdAt])
+  @@index([clientId])
+  @@index([kind, reportDate])
+}
+
+model OfficeRegisterStaff {
+  registerId String
+  userId String
+  register OfficeRegister @relation(fields: [registerId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction)
+  @@id([registerId, userId])
+  @@index([userId])
+}
+
+model OfficeRegisterTask {
+  registerId String
+  taskId String
+  register OfficeRegister @relation(fields: [registerId], references: [id], onDelete: Cascade)
+  task ComplianceTask @relation(fields: [taskId], references: [id], onDelete: NoAction)
+  @@id([registerId, taskId])
+  @@index([taskId])
+}
+
+model OfficeRegisterDocument {
+  registerId String
+  documentId String
+  register OfficeRegister @relation(fields: [registerId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: NoAction)
+  @@id([registerId, documentId])
+  @@index([documentId])
 }
 
 model StudentRegistration {
@@ -542,6 +593,7 @@ model Document {
   uploadedBy      User             @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
   taxRecordLinks  TaxRecordDocument[]
   complianceLinks ComplianceDocument[]
+  officeRegisters OfficeRegisterDocument[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -590,6 +642,7 @@ model ComplianceTask {
   createdById    String
   createdBy      User            @relation("ComplianceTaskCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   documents      ComplianceDocument[]
+  officeRegisters OfficeRegisterTask[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { getServiceLabel } from "@/lib/admin/students";
 import { requirePermission } from "@/lib/admin/auth";
 import { prisma } from "@/lib/prisma";
+import { registerDefinitions, type RegisterKind } from "@/lib/admin/office-registers";
+import { registerModules } from "./registers/access";
 
 export const metadata: Metadata = { title: "Student details" };
 export const dynamic = "force-dynamic";
@@ -84,6 +86,21 @@ export default async function StudentsPage({
 
   return (
     <div className="space-y-5">
+      <section aria-labelledby="student-register-selector" className="border border-border bg-surface p-4 sm:p-5">
+        <h2 className="font-semibold text-primary" id="student-register-selector">Choose a register</h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span aria-current="page" className="button button-primary">Student admissions</span>
+          {(Object.keys(registerDefinitions) as RegisterKind[]).filter((kind) =>
+            admin.roleName === "SUPER_ADMIN" || registerModules(kind).every((module) =>
+              admin.permissions.some((permission) => permission.module === module && permission.action === PermissionAction.VIEW),
+            ),
+          ).map((kind) => (
+            <Link className="button button-secondary" href={`/admin/students/registers/${kind}`} key={kind}>
+              {registerDefinitions[kind].title}
+            </Link>
+          ))}
+        </div>
+      </section>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-text-secondary">
           Search and manage student admission records.

@@ -10,6 +10,16 @@ export function AdminPageTitle() {
     title = "Clients";
   } else if (pathname === "/admin/clients/new") {
     title = "Add client";
+  } else if (pathname === "/admin/students") {
+    title = "Student details";
+  } else if (pathname.startsWith("/admin/students/registers/")) {
+    title = "Office registers";
+  } else if (pathname === "/admin/students/new") {
+    title = "Register student";
+  } else if (pathname.startsWith("/admin/students/") && pathname.endsWith("/edit")) {
+    title = "Edit student";
+  } else if (pathname.startsWith("/admin/students/")) {
+    title = "Student details";
   } else if (pathname === "/admin/billing") {
     title = "Billing";
   } else if (pathname === "/admin/billing/new") {

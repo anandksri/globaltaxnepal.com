@@ -136,6 +136,9 @@ export async function deleteDocument(
     if (error instanceof Error && error.message === "DOCUMENT_NOT_FOUND") {
       return { error: "This document could not be found." };
     }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      return { error: "This document is linked to an office register. Remove it from the register before deleting it." };
+    }
     console.error("[admin-documents] Document record deletion failed.", {
       name: error instanceof Error ? error.name : "UnknownError",
     });
