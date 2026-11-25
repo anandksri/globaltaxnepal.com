@@ -312,8 +312,7 @@ header {
   align-items: end;
 }
 
-.admin-root main,
-.admin-root main > * {
+.admin-root main {
   min-width: 0;
   max-width: 100%;
 }
