@@ -42,6 +42,7 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
     title: "Clients",
     items: [
       { label: "Client management", href: "/admin/clients", icon: Users },
+      { label: "Client monthly data", href: "/admin/clients/monthly-data", icon: BookOpenCheck },
       { label: "Student details", href: "/admin/students", icon: GraduationCap },
       { label: "Documents", href: "/admin/documents", icon: Files },
     ],
@@ -92,6 +93,9 @@ export function AdminNavigation({ admin }: { admin: AdminIdentity }) {
         const items = section.items.filter(({ href }) => {
           if (!href || admin.roleName === "SUPER_ADMIN") return true;
           if (href.startsWith("/admin/tax")) return false;
+          if (href === "/admin/clients/monthly-data" && !admin.permissions.some((permission) =>
+            permission.module === AdminModule.DOCUMENTS && permission.action === PermissionAction.VIEW
+          )) return false;
           if (href === "/admin/settings/roles") return false;
           if (href === "/admin/settings/account") return true;
           const module = requiredPermission(href);
@@ -108,7 +112,9 @@ export function AdminNavigation({ admin }: { admin: AdminIdentity }) {
           </h2>
           <ul className="mt-1.5 space-y-0.5">
             {items.map(({ href, icon: Icon, label }) => {
-              const isActive = href === "/admin"
+              const isActive = href === "/admin/clients" && pathname.startsWith("/admin/clients/monthly-data")
+                ? false
+                : href === "/admin"
                 ? pathname === "/admin"
                 : href === "/admin/settings"
                   ? pathname === href

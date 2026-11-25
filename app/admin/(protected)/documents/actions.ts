@@ -55,10 +55,11 @@ export async function updateDocument(
     const result = await prisma.$transaction(async (transaction) => {
       const current = await transaction.document.findUnique({
         where: { id: id.data },
-        select: { title: true, category: true, clientId: true },
+        select: { title: true, category: true, clientId: true, _count: { select: { monthlyDataLinks: true } } },
       });
       if (!current) return "missing" as const;
       const clientId = parsed.data.clientId || null;
+      if (clientId !== current.clientId && current._count.monthlyDataLinks) return "linked" as const;
       if (clientId) {
         const client = await transaction.client.findUnique({ where: { id: clientId }, select: { id: true } });
         if (!client) return "client" as const;
@@ -90,6 +91,7 @@ export async function updateDocument(
     });
     if (result === "missing") return { error: "This document could not be found." };
     if (result === "client") return { error: "The selected client could not be found." };
+    if (result === "linked") return { error: "Unlink this document from client monthly data before changing its client." };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
       return { error: "The selected client is no longer available." };
@@ -137,7 +139,7 @@ export async function deleteDocument(
       return { error: "This document could not be found." };
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
-      return { error: "This document is linked to an office register. Remove it from the register before deleting it." };
+      return { error: "This document is linked to an office register or client monthly data. Unlink it before deleting it." };
     }
     console.error("[admin-documents] Document record deletion failed.", {
       name: error instanceof Error ? error.name : "UnknownError",

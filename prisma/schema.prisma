@@ -212,6 +212,7 @@ model Client {
   taxRecords       ClientTaxRecord[]
   complianceTasks  ComplianceTask[]
   officeRegisters OfficeRegister[]
+  monthlyData     ClientMonthlyData?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -219,6 +220,24 @@ model Client {
   @@index([type, createdAt])
   @@index([phone])
   @@index([isActive, createdAt])
+}
+
+model ClientMonthlyData {
+  clientId  String @id
+  client    Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  dates     Json
+  remarks   String? @db.Text
+  documents ClientMonthlyDocument[]
+  updatedAt DateTime @updatedAt
+}
+
+model ClientMonthlyDocument {
+  clientId   String
+  documentId String
+  monthlyData ClientMonthlyData @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  document    Document @relation(fields: [documentId], references: [id], onDelete: NoAction)
+  @@id([clientId, documentId])
+  @@index([documentId])
 }
 
 model OfficeRegister {
@@ -594,6 +613,7 @@ model Document {
   taxRecordLinks  TaxRecordDocument[]
   complianceLinks ComplianceDocument[]
   officeRegisters OfficeRegisterDocument[]
+  monthlyDataLinks ClientMonthlyDocument[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
