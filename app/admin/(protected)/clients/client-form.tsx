@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { Plus, X } from "lucide-react";
+import { useActionState, useRef, useState } from "react";
 import type { ClientActionState } from "./actions";
 
 export type ClientFormValues = {
@@ -9,6 +10,10 @@ export type ClientFormValues = {
   contactPerson: string;
   email: string;
   phone: string;
+  additionalContactName: string;
+  additionalContactMobile: string;
+  additionalContactAddress: string;
+  additionalContactFirmName: string;
   province: string;
   district: string;
   municipality: string;
@@ -28,6 +33,10 @@ const emptyValues: ClientFormValues = {
   contactPerson: "",
   email: "",
   phone: "",
+  additionalContactName: "",
+  additionalContactMobile: "",
+  additionalContactAddress: "",
+  additionalContactFirmName: "",
   province: "",
   district: "",
   municipality: "",
@@ -123,6 +132,8 @@ export function ClientForm({
   const [vatRegistered, setVatRegistered] = useState(
     initialValues.vatRegistered,
   );
+  const [documentInputIds, setDocumentInputIds] = useState([0]);
+  const nextDocumentInputId = useRef(1);
 
   return (
     <form action={formAction} className="space-y-7">
@@ -189,6 +200,54 @@ export function ClientForm({
             type="email"
             autoComplete="email"
           />
+        </div>
+      </section>
+
+      <section aria-labelledby="additional-contact-heading">
+        <h2
+          className="border-b border-border pb-3 text-base font-semibold text-primary"
+          id="additional-contact-heading"
+        >
+          Additional client contact information
+        </h2>
+        <div className="mt-4 grid gap-5 sm:grid-cols-2">
+          <TextField
+            error={state.fieldErrors?.additionalContactName}
+            initialValue={initialValues.additionalContactName}
+            label="Name"
+            maxLength={200}
+            name="additionalContactName"
+          />
+          <TextField
+            error={state.fieldErrors?.additionalContactMobile}
+            initialValue={initialValues.additionalContactMobile}
+            label="Mobile"
+            maxLength={40}
+            name="additionalContactMobile"
+            type="tel"
+          />
+          <TextField
+            error={state.fieldErrors?.additionalContactFirmName}
+            initialValue={initialValues.additionalContactFirmName}
+            label="Firm name"
+            maxLength={200}
+            name="additionalContactFirmName"
+          />
+          <div className="sm:col-span-2">
+            <label className="form-label" htmlFor="client-additionalContactAddress">
+              Address
+            </label>
+            <textarea
+              aria-invalid={Boolean(state.fieldErrors?.additionalContactAddress)}
+              className="form-control min-h-24 resize-y"
+              defaultValue={initialValues.additionalContactAddress}
+              id="client-additionalContactAddress"
+              maxLength={500}
+              name="additionalContactAddress"
+              rows={3}
+            />
+            <FieldError message={state.fieldErrors?.additionalContactAddress} />
+          </div>
         </div>
       </section>
 
@@ -348,27 +407,65 @@ export function ClientForm({
           </h2>
           <div className="mt-4 grid gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="form-label" htmlFor="client-documentFile">
+              <span className="form-label">
                 Document file{" "}
                 <span className="font-normal text-text-secondary">
-                  (PDF, JPG, PNG, or WebP; up to 10 MB; optional)
+                  (PDF, JPG, PNG, or WebP; up to 10 MB total; up to 10 files)
                 </span>
-              </label>
-              <input
-                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                aria-invalid={Boolean(state.fieldErrors?.documentFile)}
-                className="form-control file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
-                id="client-documentFile"
-                name="documentFile"
-                type="file"
-              />
+              </span>
+              <div className="mt-2 space-y-3">
+                {documentInputIds.map((inputId, index) => (
+                  <div className="flex items-start gap-2" key={inputId}>
+                    <div className="min-w-0 flex-1">
+                      <label className="sr-only" htmlFor={`client-documentFile-${inputId}`}>
+                        Document file {index + 1}
+                      </label>
+                      <input
+                        accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                        aria-invalid={Boolean(state.fieldErrors?.documentFile)}
+                        className="form-control file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+                        id={`client-documentFile-${inputId}`}
+                        name="documentFiles"
+                        type="file"
+                      />
+                    </div>
+                    {documentInputIds.length > 1 && (
+                      <button
+                        aria-label={`Remove document file ${index + 1}`}
+                        className="button button-secondary !px-3"
+                        onClick={() =>
+                          setDocumentInputIds((current) =>
+                            current.filter((id) => id !== inputId),
+                          )
+                        }
+                        type="button"
+                      >
+                        <X aria-hidden="true" size={18} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  className="button button-secondary"
+                  disabled={documentInputIds.length >= 10}
+                  onClick={() => {
+                    const inputId = nextDocumentInputId.current;
+                    nextDocumentInputId.current += 1;
+                    setDocumentInputIds((current) => [...current, inputId]);
+                  }}
+                  type="button"
+                >
+                  <Plus aria-hidden="true" size={18} />
+                  Add another file
+                </button>
+              </div>
               <FieldError message={state.fieldErrors?.documentFile} />
             </div>
             <div>
               <label className="form-label" htmlFor="client-documentTitle">
                 Document name{" "}
                 <span className="font-normal text-text-secondary">
-                  (optional; defaults to the file name)
+                  (optional; used for one file, otherwise file names are used)
                 </span>
               </label>
               <input

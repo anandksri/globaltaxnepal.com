@@ -48,6 +48,10 @@ function getClientData(data: NonNullable<ReturnType<typeof getClientFormData>["d
     contactPerson: data.contactPerson ?? null,
     email: data.email ?? null,
     phone: data.phone ?? null,
+    additionalContactName: data.additionalContactName ?? null,
+    additionalContactMobile: data.additionalContactMobile ?? null,
+    additionalContactAddress: data.additionalContactAddress ?? null,
+    additionalContactFirmName: data.additionalContactFirmName ?? null,
     province: data.province ?? null,
     district: data.district ?? null,
     municipality: data.municipality ?? null,
@@ -94,44 +98,55 @@ export async function createClient(
     };
   }
 
-  const fileValue = formData.get("documentFile");
-  if (fileValue instanceof File && fileValue.name !== "") {
+  const fileValues = formData.getAll("documentFiles");
+  if (fileValues.some((value) => !(value instanceof File))) {
+    return {
+      error: "Choose valid document files.",
+      fieldErrors: { documentFile: "Choose valid document files." },
+    };
+  }
+  const files = fileValues.filter(
+    (value): value is File => value instanceof File && value.name !== "",
+  );
+  if (files.length > 10) {
+    return {
+      error: "You can upload up to 10 documents at a time.",
+      fieldErrors: { documentFile: "Choose no more than 10 documents." },
+    };
+  }
+  if (files.reduce((total, file) => total + file.size, 0) > maxDocumentSize) {
+    return {
+      error: "The total size of all documents must be no larger than 10 MB.",
+      fieldErrors: { documentFile: "The total upload size must be no larger than 10 MB." },
+    };
+  }
+  if (files.length > 0) {
     await requirePermission("DOCUMENTS", "CREATE");
   }
 
-  let uploadedDocument:
-    | {
-        title: string;
-        note: string | null;
-        originalName: string;
-        storageKey: string;
-        mimeType: string;
-        bytes: Buffer;
-      }
-    | undefined;
-
-  if (fileValue !== null && !(fileValue instanceof File)) {
-    return {
-      error: "Choose a valid document file.",
-      fieldErrors: { documentFile: "Choose a valid document file." },
-    };
-  }
-
-  if (fileValue instanceof File && fileValue.name !== "") {
-    if (fileValue.size === 0) {
+  const uploadedDocuments: Array<{
+    title: string;
+    note: string | null;
+    originalName: string;
+    storageKey: string;
+    mimeType: string;
+    bytes: Buffer;
+  }> = [];
+  for (const file of files) {
+    if (file.size === 0) {
       return {
         error: "Choose a non-empty document file.",
         fieldErrors: { documentFile: "The selected file is empty." },
       };
     }
-    if (fileValue.size > maxDocumentSize) {
+    if (file.size > maxDocumentSize) {
       return {
         error: "The document must be no larger than 10 MB.",
         fieldErrors: { documentFile: "The document must be no larger than 10 MB." },
       };
     }
 
-    const originalName = fileValue.name.replaceAll("\\", "/").split("/").pop()?.trim() ?? "";
+    const originalName = file.name.replaceAll("\\", "/").split("/").pop()?.trim() ?? "";
     if (!originalName || originalName.length > 255) {
       return {
         error: "The document file name is invalid or too long.",
@@ -139,8 +154,8 @@ export async function createClient(
       };
     }
 
-    const bytes = Buffer.from(await fileValue.arrayBuffer());
-    const validatedFile = validateDocumentBytes(originalName, fileValue.type, bytes);
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const validatedFile = validateDocumentBytes(originalName, file.type, bytes);
     if (!validatedFile) {
       return {
         error: "Use a matching PDF, JPG, PNG, or WebP file.",
@@ -153,14 +168,17 @@ export async function createClient(
     const defaultTitle =
       originalName.replace(/\.[^.]+$/, "").trim().slice(0, 200) ||
       originalName.slice(0, 200);
-    uploadedDocument = {
-      title: parsedDocument.data.title ?? defaultTitle,
+    uploadedDocuments.push({
+      title:
+        files.length === 1
+          ? parsedDocument.data.title ?? defaultTitle
+          : defaultTitle,
       note: parsedDocument.data.note ?? null,
       originalName,
       storageKey: validatedFile.storageKey,
       mimeType: validatedFile.mimeType,
       bytes,
-    };
+    });
   }
 
   let clientId: string;
@@ -172,7 +190,7 @@ export async function createClient(
         select: { id: true },
       });
 
-      if (uploadedDocument) {
+      for (const uploadedDocument of uploadedDocuments) {
         const document = await transaction.document.create({
           data: {
             title: uploadedDocument.title,

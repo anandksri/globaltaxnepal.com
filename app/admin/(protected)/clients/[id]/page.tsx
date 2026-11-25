@@ -190,6 +190,17 @@ export default async function ClientDetailsPage({
           </p>
         </div>
       </section>
+      <section className="border border-border bg-surface p-5 sm:p-7">
+        <h2 className="border-b border-border pb-3 font-semibold text-primary">
+          Additional client contact information
+        </h2>
+        <div className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+          <Detail label="Name" value={client.additionalContactName} />
+          <Detail label="Mobile" value={client.additionalContactMobile} />
+          <Detail label="Firm name" value={client.additionalContactFirmName} />
+          <Detail label="Address" value={client.additionalContactAddress} />
+        </div>
+      </section>
       {mayView(admin, AdminModule.BILLING) && (
         <section className="border border-border bg-surface">
           <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
