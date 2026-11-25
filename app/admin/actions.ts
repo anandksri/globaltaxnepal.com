@@ -209,7 +209,12 @@ export async function resendAdminTwoFactor(
 
   const user = await prisma.user.findUnique({
     where: { id: pending.userId },
-    select: { id: true, email: true, isActive: true },
+    select: {
+      id: true,
+      email: true,
+      isActive: true,
+      role: { select: { name: true } },
+    },
   });
   if (!user || !user.isActive) {
     await clearPendingTwoFactorSession();
@@ -218,7 +223,11 @@ export async function resendAdminTwoFactor(
 
   try {
     const code = generateTwoFactorCode();
-    await sendAdminTwoFactorCode(process.env.ADMIN_2FA_EMAIL?.trim() || user.email, code);
+    const codeEmail =
+      user.role.name === "SUPER_ADMIN"
+        ? process.env.ADMIN_2FA_EMAIL?.trim() || user.email
+        : user.email;
+    await sendAdminTwoFactorCode(codeEmail, code);
     await createPendingTwoFactorSession(
       user.id,
       code,

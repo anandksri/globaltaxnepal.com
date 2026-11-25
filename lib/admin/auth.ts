@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createHash, randomInt, timingSafeEqual } from "node:crypto";
+import { createHash, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import {
   errors as joseErrors,
@@ -74,11 +74,20 @@ export async function createPendingTwoFactorSession(
   code: string,
   rememberMe = false,
 ) {
-  const token = await new SignJWT({
-    otpHash: getTwoFactorCodeHash(code),
+  const id = randomUUID();
+  const challengeData = {
+    codeHash: getTwoFactorCodeHash(code),
     attempts: 0,
     rememberMe,
-  })
+    expiresAt: new Date(Date.now() + pendingTwoFactorLifetimeSeconds * 1000),
+  };
+  const challenge = await prisma.adminTwoFactorChallenge.upsert({
+    where: { userId },
+    update: { id, ...challengeData },
+    create: { id, userId, ...challengeData },
+    select: { id: true },
+  });
+  const token = await new SignJWT({ challengeId: challenge.id })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(sessionIssuer)
     .setAudience(`${sessionAudience}-2fa`)
@@ -108,21 +117,23 @@ export async function getPendingTwoFactorSession() {
       issuer: sessionIssuer,
     });
 
-    if (
-      typeof payload.sub !== "string" ||
-      typeof payload.otpHash !== "string" ||
-      typeof payload.attempts !== "number" ||
-      typeof payload.rememberMe !== "boolean"
-    ) {
+    if (typeof payload.challengeId !== "string") {
       return null;
     }
 
-    return {
-      userId: payload.sub,
-      otpHash: payload.otpHash,
-      attempts: payload.attempts,
-      rememberMe: payload.rememberMe,
-    };
+    const challenge = await prisma.adminTwoFactorChallenge.findUnique({
+      where: { id: payload.challengeId },
+      select: {
+        id: true,
+        userId: true,
+        codeHash: true,
+        attempts: true,
+        rememberMe: true,
+        expiresAt: true,
+      },
+    });
+    if (!challenge || challenge.expiresAt <= new Date()) return null;
+    return { challengeId: challenge.id, ...challenge };
   } catch {
     return null;
   }
@@ -138,38 +149,30 @@ export async function verifyTwoFactorCode(code: string) {
 
   const suppliedHash = getTwoFactorCodeHash(code);
   const suppliedBuffer = Buffer.from(suppliedHash, "hex");
-  const storedBuffer = Buffer.from(pending.otpHash, "hex");
+  const storedBuffer = Buffer.from(pending.codeHash, "hex");
   const matches =
     suppliedBuffer.length === storedBuffer.length &&
     timingSafeEqual(suppliedBuffer, storedBuffer);
 
   if (!matches) {
     const nextAttempts = pending.attempts + 1;
+    const updated = await prisma.adminTwoFactorChallenge.updateMany({
+      where: {
+        id: pending.challengeId,
+        attempts: pending.attempts,
+        expiresAt: { gt: new Date() },
+      },
+      data: { attempts: nextAttempts },
+    });
+    if (updated.count !== 1) return { status: "expired" as const };
+
     if (nextAttempts >= maximumTwoFactorAttempts) {
+      await prisma.adminTwoFactorChallenge.deleteMany({
+        where: { id: pending.challengeId },
+      });
       await clearPendingTwoFactorSession();
       return { status: "too-many-attempts" as const };
     }
-
-    const token = await new SignJWT({
-      otpHash: pending.otpHash,
-      attempts: nextAttempts,
-      rememberMe: pending.rememberMe,
-    })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuer(sessionIssuer)
-      .setAudience(`${sessionAudience}-2fa`)
-      .setSubject(pending.userId)
-      .setIssuedAt()
-      .setExpirationTime(`${pendingTwoFactorLifetimeSeconds}s`)
-      .sign(getSessionKey());
-
-    (await cookies()).set(pendingTwoFactorCookieName, token, {
-      httpOnly: true,
-      maxAge: pendingTwoFactorLifetimeSeconds,
-      path: "/admin",
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
 
     return {
       status: "incorrect" as const,
@@ -177,13 +180,38 @@ export async function verifyTwoFactorCode(code: string) {
     };
   }
 
+  const consumed = await prisma.adminTwoFactorChallenge.deleteMany({
+    where: {
+      id: pending.challengeId,
+      expiresAt: { gt: new Date() },
+    },
+  });
+  if (consumed.count !== 1) return { status: "expired" as const };
   await clearPendingTwoFactorSession();
   await createAdminSession(pending.userId, pending.rememberMe);
   return { status: "verified" as const };
 }
 
 export async function clearPendingTwoFactorSession() {
-  (await cookies()).set(pendingTwoFactorCookieName, "", {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(pendingTwoFactorCookieName)?.value;
+  if (token) {
+    try {
+      const { payload } = await jwtVerify(token, getSessionKey(), {
+        algorithms: ["HS256"],
+        audience: `${sessionAudience}-2fa`,
+        issuer: sessionIssuer,
+      });
+      if (typeof payload.challengeId === "string") {
+        await prisma.adminTwoFactorChallenge.deleteMany({
+          where: { id: payload.challengeId },
+        });
+      }
+    } catch {
+      // An invalid or expired cookie is still cleared below.
+    }
+  }
+  cookieStore.set(pendingTwoFactorCookieName, "", {
     httpOnly: true,
     maxAge: 0,
     path: "/admin",

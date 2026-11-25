@@ -309,8 +309,18 @@ export async function issueStaffInvitation(
   const tokenHash = createHash("sha256").update(token).digest("hex");
   try {
     const inviteUser = await prisma.$transaction(async (transaction) => {
-      const user = await transaction.user.findUnique({ where: { id: id.data }, select: { id: true, isActive: true, name: true, email: true } });
+      const user = await transaction.user.findUnique({
+        where: { id: id.data },
+        select: {
+          id: true,
+          isActive: true,
+          name: true,
+          email: true,
+          role: { select: { name: true, permissions: { select: { module: true, action: true } } } },
+        },
+      });
       if (!user || !user.isActive) throw new Error("STAFF_USER_UNAVAILABLE");
+      if (!mayAssignRole(admin, user.role)) throw new Error("STAFF_ROLE_ASSIGNMENT_RESTRICTED");
       await transaction.userInvitation.updateMany({ where: { userId: id.data, usedAt: null }, data: { usedAt: new Date() } });
       await transaction.userInvitation.create({
         data: { tokenHash, userId: id.data, createdById: admin.id, expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000) },
@@ -333,6 +343,7 @@ export async function issueStaffInvitation(
     return { success: "A new setup email was sent.", invitePath };
   } catch (error) {
     if (error instanceof Error && error.message === "STAFF_USER_UNAVAILABLE") return { error: "Only active staff accounts can receive an invitation." };
+    if (error instanceof Error && error.message === "STAFF_ROLE_ASSIGNMENT_RESTRICTED") return { error: "You cannot reset the password for this account." };
     console.error("[admin-settings] Staff invitation could not be issued.", { name: error instanceof Error ? error.name : "UnknownError" });
     return { error: "The setup invitation could not be issued." };
   }
