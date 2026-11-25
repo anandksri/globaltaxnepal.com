@@ -12,6 +12,22 @@ enum ClientType {
   BUSINESS
 }
 
+enum StudentServiceType {
+  STUDENT_ADMISSION
+  PAN_REGISTRATION
+  VAT_REGISTRATION
+  COMPANY_REGISTRATION
+  TAX_CLEARANCE
+  ACCOUNTING_BOOKKEEPING
+  OTHER
+}
+
+enum StudentApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum BillStatus {
   DRAFT
   ISSUED
@@ -85,6 +101,7 @@ enum AdminModule {
   REPORTS
   SETTINGS
   STAFF_MANAGEMENT
+  STUDENTS
 }
 
 enum PermissionAction {
@@ -113,6 +130,8 @@ model User {
   uploadedDocuments Document[] @relation("DocumentUploadedBy")
   assignedComplianceTasks ComplianceTask[] @relation("ComplianceTaskAssignedTo")
   createdComplianceTasks ComplianceTask[] @relation("ComplianceTaskCreatedBy")
+  createdStudentRegistrations StudentRegistration[] @relation("StudentRegistrationCreatedBy")
+  assignedStudentRegistrations StudentRegistration[] @relation("StudentRegistrationAssignedTo")
   invitations UserInvitation[] @relation("InvitationRecipient")
   createdInvitations UserInvitation[] @relation("InvitationCreatedBy")
   notifications Notification[]
@@ -197,6 +216,50 @@ model Client {
   @@index([type, createdAt])
   @@index([phone])
   @@index([isActive, createdAt])
+}
+
+model StudentRegistration {
+  id                       String                @id @default(cuid())
+  studentName              String                @db.VarChar(200)
+  mobile                   String?               @db.VarChar(40)
+  address                  String?               @db.VarChar(500)
+  panCompanyName           String?               @db.VarChar(100)
+  inquiryReference         String?               @db.VarChar(200)
+  admissionBatch           String?               @db.VarChar(100)
+  serviceTypes             StudentServiceType[]  @default([])
+  otherService             String?               @db.VarChar(200)
+  courseName               String?               @db.VarChar(200)
+  workDescription          String?               @db.Text
+  assignedToId             String?
+  assignedTo               User?                 @relation("StudentRegistrationAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  expectedCompletionDate   DateTime?             @db.Date
+  totalAmount              Decimal               @default(0) @db.Decimal(14, 2)
+  receivedAmount           Decimal               @default(0) @db.Decimal(14, 2)
+  paymentMethod            PaymentMethod?
+  dueDate                  DateTime?             @db.Date
+  portalWebsite            String?               @db.VarChar(255)
+  portalUserId             String?               @db.VarChar(255)
+  portalPasswordEncrypted  String?               @db.Text
+  receptionReceivedBy      String?               @db.VarChar(100)
+  receptionDate            DateTime?             @db.Date
+  checkingVerifiedBy       String?               @db.VarChar(100)
+  checkingDate             DateTime?             @db.Date
+  accountsCheckedBy        String?               @db.VarChar(100)
+  accountsCheckDate        DateTime?             @db.Date
+  approvalStatus           StudentApprovalStatus @default(PENDING)
+  approvedBy               String?               @db.VarChar(100)
+  approvalDate             DateTime?             @db.Date
+  remarks                  String?               @db.Text
+  discussionNotes          String?               @db.Text
+  createdById              String
+  createdBy                User                  @relation("StudentRegistrationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+
+  @@index([studentName])
+  @@index([mobile])
+  @@index([approvalStatus, createdAt])
+  @@index([assignedToId])
 }
 
 model CompanySettings {

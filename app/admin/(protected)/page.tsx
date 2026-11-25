@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { AdminModule, PermissionAction } from "@prisma/client";
+import Link from "next/link";
 import { requirePermission } from "@/lib/admin/auth";
 import { getAccountsOverview } from "@/lib/admin/accounts";
 import { formatCurrency, moneyToCents } from "@/lib/admin/billing";
@@ -29,13 +31,35 @@ function SummaryItem({
 
 export default async function AdminOverviewPage() {
   const admin = await requirePermission("DASHBOARD", "VIEW");
+  const canViewStudents =
+    admin.roleName === "SUPER_ADMIN" ||
+    admin.permissions.some(
+      (permission) =>
+        permission.module === AdminModule.STUDENTS &&
+        permission.action === PermissionAction.VIEW,
+    );
+  const canCreateStudents =
+    admin.roleName === "SUPER_ADMIN" ||
+    admin.permissions.some(
+      (permission) =>
+        permission.module === AdminModule.STUDENTS &&
+        permission.action === PermissionAction.CREATE,
+    );
   const canViewAccounts =
     admin.roleName === "SUPER_ADMIN" ||
     admin.permissions.some(
       (permission) => permission.module === "ACCOUNTS" && permission.action === "VIEW",
     );
 
-  const [clientCount, userCount, activityCount, recentActivity, settings] =
+  const [
+    clientCount,
+    userCount,
+    activityCount,
+    recentActivity,
+    settings,
+    studentCount,
+    recentStudents,
+  ] =
     await Promise.all([
       prisma.client.count(),
       prisma.user.count(),
@@ -56,6 +80,20 @@ export default async function AdminOverviewPage() {
         where: { id: "company" },
         select: { name: true, email: true, phone: true },
       }),
+      canViewStudents ? prisma.studentRegistration.count() : Promise.resolve(0),
+      canViewStudents
+        ? prisma.studentRegistration.findMany({
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            select: {
+              id: true,
+              studentName: true,
+              admissionBatch: true,
+              approvalStatus: true,
+              createdAt: true,
+            },
+          })
+        : Promise.resolve([]),
     ]);
   const accountOverview = canViewAccounts ? await getAccountsOverview() : null;
 
@@ -70,6 +108,57 @@ export default async function AdminOverviewPage() {
         <SummaryItem label="User accounts" value={userCount} />
         <SummaryItem label="Recorded activity" value={activityCount} />
       </section>
+
+      {canViewStudents && (
+        <section
+          aria-labelledby="student-details-heading"
+          className="border border-border bg-surface"
+          id="student-details"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
+            <div>
+              <h2 className="text-base font-semibold text-primary" id="student-details-heading">
+                Student details
+              </h2>
+              <p className="mt-1 text-sm text-text-secondary">
+                {studentCount} student {studentCount === 1 ? "registration" : "registrations"}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Link className="button button-secondary" href="/admin/students">View students</Link>
+              {canCreateStudents && (
+                <Link className="button button-primary" href="/admin/students/new">Register student</Link>
+              )}
+            </div>
+          </div>
+          {recentStudents.length > 0 ? (
+            <ul className="divide-y divide-border">
+              {recentStudents.map((student) => (
+                <li
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-6"
+                  key={student.id}
+                >
+                  <div>
+                    <Link className="text-sm font-medium text-secondary hover:text-primary" href={`/admin/students/${student.id}`}>
+                      {student.studentName}
+                    </Link>
+                    <p className="mt-1 text-xs text-text-secondary">
+                      {student.admissionBatch || "No batch"} · {student.createdAt.toLocaleDateString("en-NP", { dateStyle: "medium", timeZone: "UTC" })}
+                    </p>
+                  </div>
+                  <span className="text-xs font-medium text-text-secondary">
+                    {student.approvalStatus.toLowerCase()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="px-5 py-6 text-sm text-text-secondary sm:px-6">
+              No students have been registered yet.
+            </p>
+          )}
+        </section>
+      )}
 
       {accountOverview && (
         <section aria-labelledby="financial-summary-heading" className="space-y-3">

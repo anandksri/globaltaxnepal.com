@@ -14,6 +14,7 @@ export const permissionModules = [
   { value: AdminModule.REPORTS, label: "Reports" },
   { value: AdminModule.SETTINGS, label: "Company settings" },
   { value: AdminModule.STAFF_MANAGEMENT, label: "Staff management" },
+  { value: AdminModule.STUDENTS, label: "Students" },
 ];
 
 export const permissionActions = [

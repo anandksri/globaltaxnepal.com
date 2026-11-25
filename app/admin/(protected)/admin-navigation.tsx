@@ -8,6 +8,7 @@ import {
   CircleDollarSign,
   CircleUserRound,
   Files,
+  GraduationCap,
   LayoutDashboard,
   ReceiptText,
   Settings,
@@ -41,6 +42,7 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
     title: "Clients",
     items: [
       { label: "Client management", href: "/admin/clients", icon: Users },
+      { label: "Student details", href: "/admin/students", icon: GraduationCap },
       { label: "Documents", href: "/admin/documents", icon: Files },
     ],
   },
@@ -67,6 +69,7 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
 function requiredPermission(href: string) {
   if (href === "/admin/my-tasks") return null;
   if (href.startsWith("/admin/clients")) return AdminModule.CLIENTS;
+  if (href.startsWith("/admin/students")) return AdminModule.STUDENTS;
   if (href.startsWith("/admin/billing") || href.startsWith("/admin/details-bills")) return AdminModule.BILLING;
   if (href.startsWith("/admin/receipt-vouchers") || href.startsWith("/admin/payment-vouchers")) return AdminModule.VOUCHERS;
   if (href.startsWith("/admin/accounts")) return AdminModule.ACCOUNTS;
