@@ -33,7 +33,7 @@ export function AdminShell({ admin, notifications, children }: AdminShellProps) 
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[100rem] bg-background">
-      <aside className="hidden w-64 shrink-0 flex-col bg-primary text-white md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-primary text-white md:flex">
         <a
           className="flex min-h-20 items-center gap-3 border-b border-white/10 px-6"
           href="/admin"
@@ -48,7 +48,7 @@ export function AdminShell({ admin, notifications, children }: AdminShellProps) 
             </span>
           </span>
         </a>
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
+        <div className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-3 py-5">
           <AdminNavigation admin={admin} />
         </div>
         <div className="border-t border-white/10 p-4 text-xs leading-5 text-white/55">
