@@ -21,7 +21,7 @@ export function VerifyTwoFactorForm() {
       <form action={verifyAction} className="space-y-5">
         <div>
           <label
-            className="mb-1.5 block text-sm font-medium text-text"
+            className="form-label"
             htmlFor="admin-two-factor-code"
           >
             Verification code
