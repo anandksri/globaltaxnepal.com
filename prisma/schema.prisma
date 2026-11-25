@@ -455,6 +455,7 @@ model Document {
   storageKey      String           @unique @db.VarChar(100)
   mimeType        String           @db.VarChar(100)
   fileSize        Int
+  fileData        Bytes?
   uploadedById    String
   uploadedBy      User             @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
   taxRecordLinks  TaxRecordDocument[]

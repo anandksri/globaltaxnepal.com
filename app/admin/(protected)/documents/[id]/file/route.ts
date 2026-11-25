@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { NextResponse, type NextRequest } from "next/server";
 import { requirePermission } from "@/lib/admin/auth";
 import { getDocumentPath } from "@/lib/admin/document-storage";
-import { getDocument } from "@/lib/admin/documents";
+import { getDocumentFile } from "@/lib/admin/documents";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,11 +14,13 @@ export async function GET(
   await requirePermission("DOCUMENTS", "VIEW");
 
   const { id } = await params;
-  const document = await getDocument(id);
+  const document = await getDocumentFile(id);
   if (!document) return NextResponse.json({ error: "Document not found." }, { status: 404 });
 
   try {
-    const bytes = await readFile(await getDocumentPath(document.storageKey));
+    const bytes =
+      document.fileData ??
+      await readFile(await getDocumentPath(document.storageKey));
     const wantsInline = request.nextUrl.searchParams.get("inline") === "1";
     const canPreview = document.mimeType === "application/pdf" || document.mimeType.startsWith("image/");
     const disposition = wantsInline && canPreview ? "inline" : "attachment";

@@ -2,7 +2,7 @@ import { DocumentCategory, Prisma } from "@prisma/client";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { requirePermission } from "@/lib/admin/auth";
-import { maxDocumentSize, storeDocument, validateDocumentBytes, removeStoredDocument } from "@/lib/admin/document-storage";
+import { maxDocumentSize, validateDocumentBytes } from "@/lib/admin/document-storage";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -71,45 +71,34 @@ export async function POST(request: NextRequest) {
       if (!client) return NextResponse.json({ error: "The selected client could not be found." }, { status: 400 });
     }
 
-    await storeDocument(validatedFile.storageKey, bytes);
-    try {
-      const document = await prisma.$transaction(async (transaction) => {
-        const created = await transaction.document.create({
-          data: {
-            title: parsed.data.title,
-            category: parsed.data.category,
-            clientId: parsed.data.clientId || null,
-            description: parsed.data.description || null,
-            originalName,
-            storageKey: validatedFile.storageKey,
-            mimeType: validatedFile.mimeType,
-            fileSize: bytes.byteLength,
-            uploadedById: admin.id,
-          },
-          select: { id: true },
-        });
-        await transaction.activityLog.create({
-          data: {
-            actorId: admin.id,
-            action: "DOCUMENT_UPLOADED",
-            targetType: "Document",
-            targetId: created.id,
-            metadata: { title: parsed.data.title, category: parsed.data.category, fileSize: bytes.byteLength },
-          },
-        });
-        return created;
+    const document = await prisma.$transaction(async (transaction) => {
+      const created = await transaction.document.create({
+        data: {
+          title: parsed.data.title,
+          category: parsed.data.category,
+          clientId: parsed.data.clientId || null,
+          description: parsed.data.description || null,
+          originalName,
+          storageKey: validatedFile.storageKey,
+          mimeType: validatedFile.mimeType,
+          fileSize: bytes.byteLength,
+          fileData: Uint8Array.from(bytes),
+          uploadedById: admin.id,
+        },
+        select: { id: true },
       });
-      return NextResponse.json({ id: document.id }, { status: 201 });
-    } catch (error) {
-      try {
-        await removeStoredDocument(validatedFile.storageKey);
-      } catch (cleanupError) {
-        console.error("[admin-documents] Failed to remove an unregistered uploaded file.", {
-          name: cleanupError instanceof Error ? cleanupError.name : "UnknownError",
-        });
-      }
-      throw error;
-    }
+      await transaction.activityLog.create({
+        data: {
+          actorId: admin.id,
+          action: "DOCUMENT_UPLOADED",
+          targetType: "Document",
+          targetId: created.id,
+          metadata: { title: parsed.data.title, category: parsed.data.category, fileSize: bytes.byteLength },
+        },
+      });
+      return created;
+    });
+    return NextResponse.json({ id: document.id }, { status: 201 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
       return NextResponse.json({ error: "The selected client is no longer available." }, { status: 400 });

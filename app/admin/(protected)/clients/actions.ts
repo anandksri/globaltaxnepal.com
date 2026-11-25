@@ -8,8 +8,6 @@ import { requirePermission } from "@/lib/admin/auth";
 import { clientIdSchema, getClientFormData } from "@/lib/admin/clients";
 import {
   maxDocumentSize,
-  removeStoredDocument,
-  storeDocument,
   validateDocumentBytes,
 } from "@/lib/admin/document-storage";
 import { prisma } from "@/lib/prisma";
@@ -168,10 +166,6 @@ export async function createClient(
   let clientId: string;
 
   try {
-    if (uploadedDocument) {
-      await storeDocument(uploadedDocument.storageKey, uploadedDocument.bytes);
-    }
-
     const client = await prisma.$transaction(async (transaction) => {
       const created = await transaction.client.create({
         data: getClientData(parsed.data),
@@ -189,6 +183,7 @@ export async function createClient(
             storageKey: uploadedDocument.storageKey,
             mimeType: uploadedDocument.mimeType,
             fileSize: uploadedDocument.bytes.byteLength,
+            fileData: Uint8Array.from(uploadedDocument.bytes),
             uploadedById: admin.id,
           },
           select: { id: true },
@@ -222,16 +217,6 @@ export async function createClient(
     });
     clientId = client.id;
   } catch (error) {
-    if (uploadedDocument) {
-      try {
-        await removeStoredDocument(uploadedDocument.storageKey);
-      } catch (cleanupError) {
-        console.error("[admin-clients] Failed to remove an unregistered client document.", {
-          name: cleanupError instanceof Error ? cleanupError.name : "UnknownError",
-        });
-      }
-    }
-
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"

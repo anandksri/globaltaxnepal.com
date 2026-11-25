@@ -112,15 +112,15 @@ export async function deleteDocument(
   const admin = await requirePermission("DOCUMENTS", "DELETE");
   const id = z.string().min(1).max(191).safeParse(documentId);
   if (!id.success) return { error: "This document could not be found." };
-  let storageKey = "";
+  let storageKey: string | null = null;
   try {
     await prisma.$transaction(async (transaction) => {
       const document = await transaction.document.findUnique({
         where: { id: id.data },
-        select: { storageKey: true, title: true, originalName: true },
+        select: { storageKey: true, fileData: true, title: true, originalName: true },
       });
       if (!document) throw new Error("DOCUMENT_NOT_FOUND");
-      storageKey = document.storageKey;
+      storageKey = document.fileData === null ? document.storageKey : null;
       await transaction.document.delete({ where: { id: id.data } });
       await transaction.activityLog.create({
         data: {
@@ -142,13 +142,15 @@ export async function deleteDocument(
     return { error: "The document could not be deleted. Please try again." };
   }
 
-  try {
-    await removeStoredDocument(storageKey);
-  } catch (error) {
-    console.error("[admin-documents] Document record was removed but its private file cleanup failed.", {
-      name: error instanceof Error ? error.name : "UnknownError",
-    });
-    return { error: "The document record was removed, but its private file could not be cleaned up. Contact your system administrator." };
+  if (storageKey) {
+    try {
+      await removeStoredDocument(storageKey);
+    } catch (error) {
+      console.error("[admin-documents] Document record was removed but its private file cleanup failed.", {
+        name: error instanceof Error ? error.name : "UnknownError",
+      });
+      return { error: "The document record was removed, but its private file could not be cleaned up. Contact your system administrator." };
+    }
   }
   revalidatePath("/admin/documents");
   redirect("/admin/documents");

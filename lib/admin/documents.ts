@@ -159,6 +159,19 @@ export function getDocument(id: string) {
   });
 }
 
+export function getDocumentFile(id: string) {
+  return prisma.document.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      originalName: true,
+      storageKey: true,
+      mimeType: true,
+      fileData: true,
+    },
+  });
+}
+
 export async function getDocumentEditData(id: string) {
   const [document, clients] = await prisma.$transaction([
     prisma.document.findUnique({ where: { id } }),
