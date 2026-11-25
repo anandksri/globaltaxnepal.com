@@ -42,6 +42,19 @@ export function LoginForm() {
           type="password"
         />
       </div>
+      <label
+        className="flex items-center gap-2 text-sm text-text"
+        htmlFor="admin-remember-me"
+      >
+        <input
+          className="size-4 accent-primary"
+          id="admin-remember-me"
+          name="rememberMe"
+          type="checkbox"
+          value="true"
+        />
+        <span>Remember me for 30 days</span>
+      </label>
       {state.error && (
         <p className="text-sm text-error" role="alert">
           {state.error}

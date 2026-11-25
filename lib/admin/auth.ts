@@ -14,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 const sessionCookieName = "gtn_admin_session";
 const pendingTwoFactorCookieName = "gtn_admin_2fa";
 const sessionLifetimeSeconds = 60 * 60 * 8;
+const rememberedSessionLifetimeSeconds = 60 * 60 * 24 * 30;
 const pendingTwoFactorLifetimeSeconds = 10 * 60;
 const maximumTwoFactorAttempts = 5;
 const sessionIssuer = "globaltaxnepal";
@@ -37,20 +38,23 @@ export type AdminIdentity = {
   permissions: Array<{ module: AdminModule; action: PermissionAction }>;
 };
 
-export async function createAdminSession(userId: string) {
+export async function createAdminSession(userId: string, rememberMe = false) {
+  const lifetimeSeconds = rememberMe
+    ? rememberedSessionLifetimeSeconds
+    : sessionLifetimeSeconds;
   const token = await new SignJWT({})
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(sessionIssuer)
     .setAudience(sessionAudience)
     .setSubject(userId)
     .setIssuedAt()
-    .setExpirationTime(`${sessionLifetimeSeconds}s`)
+    .setExpirationTime(`${lifetimeSeconds}s`)
     .sign(getSessionKey());
 
   const cookieStore = await cookies();
   cookieStore.set(sessionCookieName, token, {
     httpOnly: true,
-    maxAge: sessionLifetimeSeconds,
+    maxAge: lifetimeSeconds,
     path: "/admin",
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -68,10 +72,12 @@ export function generateTwoFactorCode() {
 export async function createPendingTwoFactorSession(
   userId: string,
   code: string,
+  rememberMe = false,
 ) {
   const token = await new SignJWT({
     otpHash: getTwoFactorCodeHash(code),
     attempts: 0,
+    rememberMe,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(sessionIssuer)
@@ -105,7 +111,8 @@ export async function getPendingTwoFactorSession() {
     if (
       typeof payload.sub !== "string" ||
       typeof payload.otpHash !== "string" ||
-      typeof payload.attempts !== "number"
+      typeof payload.attempts !== "number" ||
+      typeof payload.rememberMe !== "boolean"
     ) {
       return null;
     }
@@ -114,6 +121,7 @@ export async function getPendingTwoFactorSession() {
       userId: payload.sub,
       otpHash: payload.otpHash,
       attempts: payload.attempts,
+      rememberMe: payload.rememberMe,
     };
   } catch {
     return null;
@@ -145,6 +153,7 @@ export async function verifyTwoFactorCode(code: string) {
     const token = await new SignJWT({
       otpHash: pending.otpHash,
       attempts: nextAttempts,
+      rememberMe: pending.rememberMe,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuer(sessionIssuer)
@@ -169,7 +178,7 @@ export async function verifyTwoFactorCode(code: string) {
   }
 
   await clearPendingTwoFactorSession();
-  await createAdminSession(pending.userId);
+  await createAdminSession(pending.userId, pending.rememberMe);
   return { status: "verified" as const };
 }
 

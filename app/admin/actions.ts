@@ -30,6 +30,7 @@ const loginSchema = z.object({
     .min(1)
     .max(72)
     .refine((password) => Buffer.byteLength(password, "utf8") <= 72),
+  rememberMe: z.literal("true").optional().transform((value) => value === "true"),
 });
 
 export async function loginAdmin(
@@ -39,6 +40,7 @@ export async function loginAdmin(
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    rememberMe: formData.get("rememberMe") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -121,7 +123,7 @@ export async function loginAdmin(
   }
 
   try {
-    await createPendingTwoFactorSession(user.id, code);
+    await createPendingTwoFactorSession(user.id, code, parsed.data.rememberMe);
   } catch (error) {
     console.error("[admin-auth] Pending verification session could not be created.", {
       name: error instanceof Error ? error.name : "UnknownError",
@@ -217,7 +219,11 @@ export async function resendAdminTwoFactor(
   try {
     const code = generateTwoFactorCode();
     await sendAdminTwoFactorCode(process.env.ADMIN_2FA_EMAIL?.trim() || user.email, code);
-    await createPendingTwoFactorSession(user.id, code);
+    await createPendingTwoFactorSession(
+      user.id,
+      code,
+      pending.rememberMe,
+    );
   } catch (error) {
     return {
       error: error instanceof Error
