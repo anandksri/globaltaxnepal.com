@@ -38,6 +38,13 @@ const optionalDocumentText = (max: number) =>
 
 const clientDocumentSchema = z.object({
   title: optionalDocumentText(200),
+  category: z.nativeEnum(DocumentCategory),
+  date: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.iso.date().optional(),
+  ),
+});
+const clientDocumentNoteSchema = z.object({
   note: optionalDocumentText(1000),
 });
 
@@ -82,57 +89,81 @@ export async function createClient(
     };
   }
 
-  const parsedDocument = clientDocumentSchema.safeParse({
-    title: formData.get("documentTitle"),
+  const parsedDocumentNote = clientDocumentNoteSchema.safeParse({
     note: formData.get("documentNote"),
   });
-  if (!parsedDocument.success) {
+  if (!parsedDocumentNote.success) {
     return {
       error: "Review the highlighted document fields and try again.",
-      fieldErrors: getFieldErrors(
-        parsedDocument.error.issues.map((issue) => ({
-          ...issue,
-          path: [issue.path[0] === "title" ? "documentTitle" : "documentNote"],
-        })),
-      ),
+      fieldErrors: { documentNote: "Document notes must be 1,000 characters or fewer." },
     };
   }
 
   const fileValues = formData.getAll("documentFiles");
-  if (fileValues.some((value) => !(value instanceof File))) {
+  const titleValues = formData.getAll("documentTitles");
+  const categoryValues = formData.getAll("documentCategories");
+  const dateValues = formData.getAll("documentDates");
+  if (
+    fileValues.length !== titleValues.length ||
+    fileValues.length !== categoryValues.length ||
+    fileValues.length !== dateValues.length ||
+    fileValues.some((value) => !(value instanceof File)) ||
+    titleValues.some((value) => typeof value !== "string") ||
+    categoryValues.some((value) => typeof value !== "string") ||
+    dateValues.some((value) => typeof value !== "string")
+  ) {
     return {
-      error: "Choose valid document files.",
-      fieldErrors: { documentFile: "Choose valid document files." },
+      error: "Review the document details and try again.",
+      fieldErrors: { documentMetadata: "The document fields are invalid." },
     };
   }
-  const files = fileValues.filter(
-    (value): value is File => value instanceof File && value.name !== "",
+  const parsedDocumentRows = z.array(clientDocumentSchema).safeParse(
+    titleValues.map((title, index) => ({
+      title,
+      category: categoryValues[index],
+      date: dateValues[index],
+    })),
   );
-  if (files.length > 10) {
+  if (!parsedDocumentRows.success) {
+    return {
+      error: "Review the document details and try again.",
+      fieldErrors: { documentMetadata: "Enter a valid document name, type, and date." },
+    };
+  }
+  const documentRows = fileValues
+    .flatMap((value, index) =>
+      value instanceof File
+        ? [{ file: value, metadata: parsedDocumentRows.data[index] }]
+        : [],
+    )
+    .filter(({ file }) => file.name !== "");
+  if (documentRows.length > 10) {
     return {
       error: "You can upload up to 10 documents at a time.",
       fieldErrors: { documentFile: "Choose no more than 10 documents." },
     };
   }
-  if (files.reduce((total, file) => total + file.size, 0) > maxDocumentSize) {
+  if (documentRows.reduce((total, { file }) => total + file.size, 0) > maxDocumentSize) {
     return {
       error: "The total size of all documents must be no larger than 10 MB.",
       fieldErrors: { documentFile: "The total upload size must be no larger than 10 MB." },
     };
   }
-  if (files.length > 0) {
+  if (documentRows.length > 0) {
     await requirePermission("DOCUMENTS", "CREATE");
   }
 
   const uploadedDocuments: Array<{
     title: string;
     note: string | null;
+    category: DocumentCategory;
+    documentDate: Date | null;
     originalName: string;
     storageKey: string;
     mimeType: string;
     bytes: Buffer;
   }> = [];
-  for (const file of files) {
+  for (const { file, metadata } of documentRows) {
     if (file.size === 0) {
       return {
         error: "Choose a non-empty document file.",
@@ -169,11 +200,12 @@ export async function createClient(
       originalName.replace(/\.[^.]+$/, "").trim().slice(0, 200) ||
       originalName.slice(0, 200);
     uploadedDocuments.push({
-      title:
-        files.length === 1
-          ? parsedDocument.data.title ?? defaultTitle
-          : defaultTitle,
-      note: parsedDocument.data.note ?? null,
+      title: metadata.title ?? defaultTitle,
+      note: parsedDocumentNote.data.note ?? null,
+      category: metadata.category,
+      documentDate: metadata.date
+        ? new Date(`${metadata.date}T00:00:00.000Z`)
+        : null,
       originalName,
       storageKey: validatedFile.storageKey,
       mimeType: validatedFile.mimeType,
@@ -194,8 +226,9 @@ export async function createClient(
         const document = await transaction.document.create({
           data: {
             title: uploadedDocument.title,
-            category: DocumentCategory.OTHER,
+            category: uploadedDocument.category,
             description: uploadedDocument.note,
+            documentDate: uploadedDocument.documentDate,
             clientId: created.id,
             originalName: uploadedDocument.originalName,
             storageKey: uploadedDocument.storageKey,
@@ -215,7 +248,7 @@ export async function createClient(
             targetId: document.id,
             metadata: {
               title: uploadedDocument.title,
-              category: DocumentCategory.OTHER,
+              category: uploadedDocument.category,
               fileSize: uploadedDocument.bytes.byteLength,
             },
           },

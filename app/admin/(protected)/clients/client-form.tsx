@@ -142,7 +142,7 @@ export function ClientForm({
           className="border-b border-border pb-3 text-base font-semibold text-primary"
           id="basic-info-heading"
         >
-          Basic information
+          Client details
         </h2>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <div>
@@ -172,24 +172,13 @@ export function ClientForm({
             required
             autoComplete="name"
           />
-          {clientType === "BUSINESS" && (
-            <TextField
-              error={state.fieldErrors?.contactPerson}
-              initialValue={initialValues.contactPerson}
-              label="Contact person"
-              maxLength={200}
-              name="contactPerson"
-              autoComplete="name"
-            />
-          )}
           <TextField
-            error={state.fieldErrors?.phone}
-            initialValue={initialValues.phone}
-            label="Mobile number"
-            maxLength={40}
-            name="phone"
-            type="tel"
-            autoComplete="tel"
+            error={state.fieldErrors?.panNumber}
+            initialValue={initialValues.panNumber}
+            label="PAN number"
+            maxLength={9}
+            name="panNumber"
+            inputMode="numeric"
           />
           <TextField
             error={state.fieldErrors?.email}
@@ -200,6 +189,25 @@ export function ClientForm({
             type="email"
             autoComplete="email"
           />
+          <TextField
+            error={state.fieldErrors?.phone}
+            initialValue={initialValues.phone}
+            label="Mobile number"
+            maxLength={40}
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+          />
+          {clientType === "BUSINESS" && (
+            <TextField
+              error={state.fieldErrors?.contactPerson}
+              initialValue={initialValues.contactPerson}
+              label="Contact person"
+              maxLength={200}
+              name="contactPerson"
+              autoComplete="name"
+            />
+          )}
         </div>
       </section>
 
@@ -208,7 +216,7 @@ export function ClientForm({
           className="border-b border-border pb-3 text-base font-semibold text-primary"
           id="additional-contact-heading"
         >
-          Additional client contact information
+          Reference details
         </h2>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <TextField
@@ -315,14 +323,6 @@ export function ClientForm({
           Tax information
         </h2>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
-          <TextField
-            error={state.fieldErrors?.panNumber}
-            initialValue={initialValues.panNumber}
-            label="PAN number"
-            maxLength={9}
-            name="panNumber"
-            inputMode="numeric"
-          />
           <div>
             <label className="form-label" htmlFor="client-vatRegistered">
               VAT registration status
@@ -403,95 +403,119 @@ export function ClientForm({
             className="border-b border-border pb-3 text-base font-semibold text-primary"
             id="client-document-heading"
           >
-            Add a document
+            Document upload
           </h2>
-          <div className="mt-4 grid gap-5 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <span className="form-label">
-                Document file{" "}
-                <span className="font-normal text-text-secondary">
-                  (PDF, JPG, PNG, or WebP; up to 10 MB total; up to 10 files)
-                </span>
-              </span>
-              <div className="mt-2 space-y-3">
-                {documentInputIds.map((inputId, index) => (
-                  <div className="flex items-start gap-2" key={inputId}>
-                    <div className="min-w-0 flex-1">
-                      <label className="sr-only" htmlFor={`client-documentFile-${inputId}`}>
-                        Document file {index + 1}
-                      </label>
-                      <input
-                        accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                        aria-invalid={Boolean(state.fieldErrors?.documentFile)}
-                        className="form-control file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
-                        id={`client-documentFile-${inputId}`}
-                        name="documentFiles"
-                        type="file"
-                      />
-                    </div>
-                    {documentInputIds.length > 1 && (
-                      <button
-                        aria-label={`Remove document file ${index + 1}`}
-                        className="button button-secondary !px-3"
-                        onClick={() =>
-                          setDocumentInputIds((current) =>
-                            current.filter((id) => id !== inputId),
-                          )
-                        }
-                        type="button"
-                      >
-                        <X aria-hidden="true" size={18} />
-                      </button>
-                    )}
+          <p className="mt-3 text-sm text-text-secondary">
+            Add up to 10 PAN certificates, certificates, or other documents. The combined upload limit is 10 MB.
+          </p>
+          <div className="mt-4 space-y-4">
+            {documentInputIds.map((inputId, index) => (
+              <div
+                className="grid gap-4 border border-border p-4 sm:grid-cols-2"
+                key={inputId}
+              >
+                <div>
+                  <label className="form-label" htmlFor={`client-documentTitle-${inputId}`}>
+                    Name of file
+                  </label>
+                  <input
+                    className="form-control"
+                    id={`client-documentTitle-${inputId}`}
+                    maxLength={200}
+                    name="documentTitles"
+                    placeholder="Defaults to the selected file name"
+                    type="text"
+                  />
+                </div>
+                <div>
+                  <label className="form-label" htmlFor={`client-documentCategory-${inputId}`}>
+                    Document type
+                  </label>
+                  <select
+                    className="form-control"
+                    defaultValue="OTHER"
+                    id={`client-documentCategory-${inputId}`}
+                    name="documentCategories"
+                  >
+                    <option value="PAN_CERTIFICATE">PAN</option>
+                    <option value="SUPPORTING_DOCUMENT">Certificate</option>
+                    <option value="OTHER">Others</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label" htmlFor={`client-documentFile-${inputId}`}>
+                    Attachment
+                    <span className="font-normal text-text-secondary"> (PDF, JPG, PNG, WebP)</span>
+                  </label>
+                  <input
+                    accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                    aria-invalid={Boolean(state.fieldErrors?.documentFile)}
+                    className="form-control file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+                    id={`client-documentFile-${inputId}`}
+                    name="documentFiles"
+                    type="file"
+                  />
+                  <FieldError message={state.fieldErrors?.documentFile} />
+                </div>
+                <div className="flex items-end gap-2">
+                  <div className="min-w-0 flex-1">
+                    <label className="form-label" htmlFor={`client-documentDate-${inputId}`}>
+                      Attachment date
+                    </label>
+                    <input
+                      className="form-control"
+                      id={`client-documentDate-${inputId}`}
+                      name="documentDates"
+                      type="date"
+                    />
                   </div>
-                ))}
-                <button
-                  className="button button-secondary"
-                  disabled={documentInputIds.length >= 10}
-                  onClick={() => {
-                    const inputId = nextDocumentInputId.current;
-                    nextDocumentInputId.current += 1;
-                    setDocumentInputIds((current) => [...current, inputId]);
-                  }}
-                  type="button"
-                >
-                  <Plus aria-hidden="true" size={18} />
-                  Add another file
-                </button>
+                  {documentInputIds.length > 1 && (
+                    <button
+                      aria-label={`Remove document ${index + 1}`}
+                      className="button button-secondary !px-3"
+                      onClick={() =>
+                        setDocumentInputIds((current) =>
+                          current.filter((id) => id !== inputId),
+                        )
+                      }
+                      type="button"
+                    >
+                      <X aria-hidden="true" size={18} />
+                    </button>
+                  )}
+                </div>
               </div>
-              <FieldError message={state.fieldErrors?.documentFile} />
-            </div>
-            <div>
-              <label className="form-label" htmlFor="client-documentTitle">
-                Document name{" "}
-                <span className="font-normal text-text-secondary">
-                  (optional; used for one file, otherwise file names are used)
-                </span>
-              </label>
-              <input
-                aria-invalid={Boolean(state.fieldErrors?.documentTitle)}
-                className="form-control"
-                id="client-documentTitle"
-                maxLength={200}
-                name="documentTitle"
-                type="text"
-              />
-              <FieldError message={state.fieldErrors?.documentTitle} />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="form-label" htmlFor="client-documentNote">
-                Document note <span className="font-normal text-text-secondary">(optional)</span>
-              </label>
-              <textarea
-                aria-invalid={Boolean(state.fieldErrors?.documentNote)}
-                className="form-control min-h-24 resize-y"
-                id="client-documentNote"
-                maxLength={1000}
-                name="documentNote"
-                rows={3}
-              />
-              <FieldError message={state.fieldErrors?.documentNote} />
-            </div>
+            ))}
+            <button
+              className="button button-secondary"
+              disabled={documentInputIds.length >= 10}
+              onClick={() => {
+                const inputId = nextDocumentInputId.current;
+                nextDocumentInputId.current += 1;
+                setDocumentInputIds((current) => [...current, inputId]);
+              }}
+              type="button"
+            >
+              <Plus aria-hidden="true" size={18} />
+              Add another document
+            </button>
+            {state.fieldErrors?.documentMetadata && (
+              <FieldError message={state.fieldErrors.documentMetadata} />
+            )}
+          </div>
+          <div className="mt-5">
+            <label className="form-label" htmlFor="client-documentNote">
+              Document note <span className="font-normal text-text-secondary">(optional; applies to all uploaded documents)</span>
+            </label>
+            <textarea
+              aria-invalid={Boolean(state.fieldErrors?.documentNote)}
+              className="form-control min-h-24 resize-y"
+              id="client-documentNote"
+              maxLength={1000}
+              name="documentNote"
+              rows={3}
+            />
+            <FieldError message={state.fieldErrors?.documentNote} />
           </div>
         </section>
       )}

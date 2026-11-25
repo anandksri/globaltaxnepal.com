@@ -37,6 +37,15 @@ export default async function DocumentDetailsPage({ params }: { params: Promise<
         </div>
         <dl className="grid gap-x-6 gap-y-4 py-5 sm:grid-cols-2">
           <Detail label="Linked client" value={document.client?.displayName ?? "Company / unlinked"} />
+          <Detail
+            label="Attachment date"
+            value={
+              document.documentDate?.toLocaleDateString("en-NP", {
+                dateStyle: "medium",
+                timeZone: "UTC",
+              }) ?? "—"
+            }
+          />
           <Detail label="Uploaded" value={document.createdAt.toLocaleString("en-NP", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} />
           <Detail label="Uploaded by" value={document.uploadedBy.name ?? document.uploadedBy.email} />
           <Detail label="Last updated" value={document.updatedAt.toLocaleDateString("en-NP", { dateStyle: "medium", timeZone: "UTC" })} />

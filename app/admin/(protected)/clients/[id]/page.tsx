@@ -63,7 +63,7 @@ export default async function ClientDetailsPage({
           where: { clientId: parsedId.data },
           orderBy: { createdAt: "desc" },
           take: 8,
-          select: { id: true, title: true, category: true, createdAt: true },
+          select: { id: true, title: true, category: true, documentDate: true },
         })
       : Promise.resolve([]),
     mayView(admin, AdminModule.TAX)
@@ -192,7 +192,7 @@ export default async function ClientDetailsPage({
       </section>
       <section className="border border-border bg-surface p-5 sm:p-7">
         <h2 className="border-b border-border pb-3 font-semibold text-primary">
-          Additional client contact information
+          Reference details
         </h2>
         <div className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
           <Detail label="Name" value={client.additionalContactName} />
@@ -248,7 +248,11 @@ export default async function ClientDetailsPage({
           {documents.length === 0 ? <p className="px-5 py-6 text-sm text-text-secondary">No documents are linked to this client.</p> : (
             <ul className="divide-y divide-border">{documents.map((document) => <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm" key={document.id}>
               <Link className="font-medium text-secondary hover:text-primary" href={`/admin/documents/${document.id}`}>{document.title}</Link>
-              <span className="text-text-secondary">{document.category.replaceAll("_", " ")}</span>
+              <span className="text-text-secondary">
+                {document.category.replaceAll("_", " ")}
+                {document.documentDate &&
+                  ` · ${document.documentDate.toLocaleDateString("en-NP", { dateStyle: "medium", timeZone: "UTC" })}`}
+              </span>
             </li>)}</ul>
           )}
         </section>
