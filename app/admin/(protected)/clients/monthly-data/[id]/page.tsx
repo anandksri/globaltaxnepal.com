@@ -18,7 +18,7 @@ export default async function ClientMonthlyPage({ params }: { params: Promise<{ 
   const client = await prisma.client.findUnique({
     where: { id },
     select: {
-      id: true, displayName: true, panNumber: true,
+      id: true, displayName: true, panNumber: true, phone: true,
       documents: { orderBy: { createdAt: "desc" }, select: { id: true, title: true } },
       monthlyData: { select: { dates: true, remarks: true, documents: { select: { documentId: true } } } },
     },
@@ -34,6 +34,7 @@ export default async function ClientMonthlyPage({ params }: { params: Promise<{ 
     <section className="border border-border bg-surface p-5 sm:p-7">
       <h2 className="text-lg font-semibold text-primary">{client.displayName}</h2>
       <p className="mt-1 text-sm text-text-secondary">PAN: {client.panNumber || "—"}</p>
+      <p className="mt-1 text-sm text-text-secondary">Mobile: {client.phone || "—"}</p>
     </section>
     <MonthlyDataForm
       action={saveMonthlyData.bind(null, client.id)}

@@ -52,11 +52,21 @@ function loadAction(count) {
       deleteMany: async () => calls.push(["delete"]),
       createMany: async (args) => calls.push(["links", args]),
     },
+    manualMonthlyClient: {
+      create: async (args) => { calls.push(["manualCreate", args]); return { id: "c123456789012345678901234" }; },
+      findUnique: async () => ({ id: "c123456789012345678901234" }),
+      update: async (args) => calls.push(["manualUpdate", args]),
+    },
+    manualMonthlyDocument: {
+      deleteMany: async () => calls.push(["manualDelete"]),
+      createMany: async (args) => calls.push(["manualLinks", args]),
+    },
     activityLog: { create: async () => calls.push(["audit"]) },
   };
   const mocks = {
     "@prisma/client": require("@prisma/client"),
     "next/cache": { revalidatePath() {} },
+    "next/navigation": { redirect: (url) => { throw new Error(`REDIRECT ${url}`); } },
     "@/lib/admin/auth": { requirePermission: async (module, action) => { calls.push(["permission", module, action]); return { id: "c345678901234567890123456" }; } },
     "@/lib/admin/client-monthly-data": loaded.exports,
     "@/lib/prisma": { prisma: { $transaction: (callback) => callback(tx) } },
@@ -67,7 +77,7 @@ function loadAction(count) {
   }).outputText;
   const exports = {};
   vm.runInNewContext(actionCode, { exports, require: (id) => Object.hasOwn(mocks, id) ? mocks[id] : require(id), console });
-  return { save: exports.saveMonthlyData, calls };
+  return { save: exports.saveMonthlyData, createManual: exports.createManualClient, saveManual: exports.saveManualClient, calls };
 }
 
 function form() {
@@ -96,4 +106,34 @@ test("rejects links to documents belonging to a different client", async () => {
   const result = await save("c123456789012345678901234", {}, form());
   assert.match(result.error, /belongs to another client/);
   assert.equal(calls.some(([type]) => type === "upsert"), false);
+});
+
+test("creates a manual-only client with mobile and PAN", async () => {
+  const { createManual, calls } = loadAction(0);
+  const data = new FormData();
+  data.set("displayName", " Manual client ");
+  data.set("phone", "9800000000");
+  data.set("panNumber", "123456789");
+  await assert.rejects(createManual({}, data), /REDIRECT .*monthly-data\/manual\//);
+  const created = calls.find(([type]) => type === "manualCreate")[1].data;
+  assert.equal(created.displayName, "Manual client");
+  assert.equal(created.phone, "9800000000");
+  assert.equal(created.panNumber, "123456789");
+  assert.ok(calls.some(([type, module, action]) => type === "permission" && module === "CLIENTS" && action === "CREATE"));
+  assert.ok(calls.some(([type]) => type === "audit"));
+});
+
+test("manual client updates link only unassigned documents", async () => {
+  const data = form();
+  data.set("displayName", "Manual client");
+  data.set("phone", "9800000000");
+  data.set("panNumber", "");
+  const accepted = loadAction(1);
+  assert.match((await accepted.saveManual("c123456789012345678901234", {}, data)).success, /saved/);
+  assert.equal(accepted.calls.find(([type]) => type === "count")[1].where.clientId, null);
+  assert.equal(accepted.calls.find(([type]) => type === "manualUpdate")[1].data.phone, "9800000000");
+  assert.ok(accepted.calls.some(([type]) => type === "manualLinks"));
+  const rejected = loadAction(0);
+  assert.match((await rejected.saveManual("c123456789012345678901234", {}, data)).error, /unavailable/);
+  assert.equal(rejected.calls.some(([type]) => type === "manualUpdate"), false);
 });

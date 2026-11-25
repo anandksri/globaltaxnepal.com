@@ -4,7 +4,7 @@ import { startTransition, useActionState, useState } from "react";
 import { nepaliMonths, type MonthlyDates } from "@/lib/admin/client-monthly-data";
 import type { MonthlyActionState } from "./actions";
 
-export function MonthlyDataForm({ action, canEdit, canUpload, clientId, dates, documents, remarks, selected }: {
+export function MonthlyDataForm({ action, canEdit, canUpload, clientId, dates, documents, remarks, selected, manualClient }: {
   action: (state: MonthlyActionState, data: FormData) => Promise<MonthlyActionState>;
   canEdit: boolean;
   canUpload: boolean;
@@ -13,6 +13,7 @@ export function MonthlyDataForm({ action, canEdit, canUpload, clientId, dates, d
   documents: Array<{ id: string; title: string }>;
   remarks: string;
   selected: string[];
+  manualClient?: { displayName: string; phone: string; panNumber: string };
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const [available, setAvailable] = useState(documents);
@@ -59,6 +60,14 @@ export function MonthlyDataForm({ action, canEdit, canUpload, clientId, dates, d
   }}>
     {state.error && <p className="border border-error/30 bg-error/5 p-3 text-sm text-error" role="alert">{state.error}</p>}
     {state.success && <p className="border border-success/30 p-3 text-sm text-success" role="status">{state.success}</p>}
+    {manualClient && <section className="border border-border bg-surface p-5 sm:p-7">
+      <h2 className="font-semibold text-primary">Manual client details</h2>
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div><label className="mb-1.5 block text-sm font-semibold text-text" htmlFor="manual-name">Client name *</label><input className="form-control" defaultValue={manualClient.displayName} disabled={!canEdit} id="manual-name" maxLength={200} name="displayName" required /></div>
+        <div><label className="mb-1.5 block text-sm font-semibold text-text" htmlFor="manual-phone">Mobile number</label><input className="form-control" defaultValue={manualClient.phone} disabled={!canEdit} id="manual-phone" maxLength={40} name="phone" type="tel" /></div>
+        <div><label className="mb-1.5 block text-sm font-semibold text-text" htmlFor="manual-pan">PAN</label><input className="form-control" defaultValue={manualClient.panNumber} disabled={!canEdit} id="manual-pan" maxLength={20} name="panNumber" /></div>
+      </div>
+    </section>}
     <section className="border border-border bg-surface p-5 sm:p-7">
       <h2 className="font-semibold text-primary">Monthly dates (BS)</h2>
       <p className="mt-2 text-sm text-text-secondary">Use YYYY-MM-DD in Bikram Sambat, with the month shown below. The day is checked from 01 to 32; verify the exact date against a Nepali calendar. These fields store one date per month; updating replaces the previous date.</p>
@@ -75,7 +84,7 @@ export function MonthlyDataForm({ action, canEdit, canUpload, clientId, dates, d
     </section>
     <section className="border border-border bg-surface p-5 sm:p-7">
       <h2 className="font-semibold text-primary">Documents</h2>
-      <p className="mt-2 text-sm text-text-secondary">Select existing client documents to link. Uploaded files are saved to Documents immediately; save this form to link them here.</p>
+      <p className="mt-2 text-sm text-text-secondary">{manualClient ? "Select documents without a linked client." : "Select existing client documents to link."} Uploaded files are saved to Documents immediately; save this form to link them here.</p>
       {canEdit && canUpload && <div className="mt-4">
         <label className="form-label" htmlFor="monthly-upload">Add documents</label>
         <input accept=".pdf,.jpg,.jpeg,.png,.webp" disabled={uploading || pending} id="monthly-upload" multiple onChange={(event) => {

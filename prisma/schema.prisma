@@ -240,6 +240,28 @@ model ClientMonthlyDocument {
   @@index([documentId])
 }
 
+model ManualMonthlyClient {
+  id          String @id @default(cuid())
+  displayName String @db.VarChar(200)
+  phone       String? @db.VarChar(40)
+  panNumber   String? @db.VarChar(20)
+  dates       Json
+  remarks     String? @db.Text
+  documents   ManualMonthlyDocument[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([displayName, id])
+}
+
+model ManualMonthlyDocument {
+  manualClientId String
+  documentId     String
+  manualClient   ManualMonthlyClient @relation(fields: [manualClientId], references: [id], onDelete: Cascade)
+  document       Document @relation(fields: [documentId], references: [id], onDelete: NoAction)
+  @@id([manualClientId, documentId])
+  @@index([documentId])
+}
+
 model OfficeRegister {
   id        String   @id @default(cuid())
   kind      String   @db.VarChar(40)
@@ -614,6 +636,7 @@ model Document {
   complianceLinks ComplianceDocument[]
   officeRegisters OfficeRegisterDocument[]
   monthlyDataLinks ClientMonthlyDocument[]
+  manualMonthlyLinks ManualMonthlyDocument[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 

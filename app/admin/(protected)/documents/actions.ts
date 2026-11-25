@@ -55,11 +55,11 @@ export async function updateDocument(
     const result = await prisma.$transaction(async (transaction) => {
       const current = await transaction.document.findUnique({
         where: { id: id.data },
-        select: { title: true, category: true, clientId: true, _count: { select: { monthlyDataLinks: true } } },
+        select: { title: true, category: true, clientId: true, _count: { select: { monthlyDataLinks: true, manualMonthlyLinks: true } } },
       });
       if (!current) return "missing" as const;
       const clientId = parsed.data.clientId || null;
-      if (clientId !== current.clientId && current._count.monthlyDataLinks) return "linked" as const;
+      if (clientId !== current.clientId && (current._count.monthlyDataLinks || current._count.manualMonthlyLinks)) return "linked" as const;
       if (clientId) {
         const client = await transaction.client.findUnique({ where: { id: clientId }, select: { id: true } });
         if (!client) return "client" as const;
