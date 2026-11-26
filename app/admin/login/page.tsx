@@ -5,6 +5,7 @@ import {
   getPendingTwoFactorSession,
 } from "@/lib/admin/auth";
 import { LoginForm } from "./login-form";
+import { InstallApp } from "@/app/components/install-app";
 
 export const metadata: Metadata = {
   title: "Admin sign in",
@@ -37,6 +38,7 @@ export default async function AdminLoginPage() {
           Sign in with an authorized administrator account.
         </p>
         <LoginForm />
+        <InstallApp />
       </section>
     </main>
   );

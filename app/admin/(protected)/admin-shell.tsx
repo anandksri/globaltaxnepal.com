@@ -15,6 +15,7 @@ import { openTaskNotification } from "./notification-actions";
 import type { AdminIdentity } from "@/lib/admin/auth";
 import { AdminNavigation } from "./admin-navigation";
 import { AdminPageTitle } from "./admin-page-title";
+import { InstallApp } from "@/app/components/install-app";
 
 type AdminShellProps = {
   admin: AdminIdentity;
@@ -145,6 +146,7 @@ export function AdminShell({ admin, notifications, children }: AdminShellProps) 
                   <p className="mt-1 break-all text-xs text-text-secondary">
                     {admin.email}
                   </p>
+                  <InstallApp />
                   <form action={logoutAdmin} className="mt-4 border-t border-border pt-3">
                     <button
                       className="flex min-h-9 w-full items-center gap-2 text-left text-sm font-medium text-primary transition-colors duration-200 ease-out hover:text-secondary"

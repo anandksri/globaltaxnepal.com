@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { InstallApp } from "./install-app";
 
 const links = [
   { href: "#home", label: "Home" },
@@ -116,7 +115,6 @@ export function SiteHeader() {
           >
             Enquire Now
           </a>
-          <InstallApp />
         </div>
       </nav>
     </header>

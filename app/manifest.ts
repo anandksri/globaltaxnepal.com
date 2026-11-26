@@ -3,10 +3,10 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Global Tax Nepal",
-    short_name: "Global Tax Nepal",
-    description: "Tax and business consultancy services from Global Tax Nepal.",
-    start_url: "/",
+    name: "Global Tax Nepal Admin",
+    short_name: "GTN Admin",
+    description: "Global Tax Nepal administration dashboard.",
+    start_url: "/admin",
     scope: "/",
     display: "standalone",
     background_color: "#ffffff",

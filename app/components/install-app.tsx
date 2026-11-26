@@ -64,7 +64,7 @@ export function InstallApp() {
         type="button"
       >
         <Download aria-hidden="true" className="icon" />
-        Install app
+        Install admin app
       </button>
       {showInstructions && (
         <p className="mt-2 text-sm leading-6 text-text-secondary" role="status">

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     "Professional tax and business consultancy, tax filing, business registration, financial review, documentation and compliance support.",
   appleWebApp: {
     capable: true,
-    title: "Global Tax Nepal",
+    title: "GTN Admin",
     statusBarStyle: "default",
   },
 };
