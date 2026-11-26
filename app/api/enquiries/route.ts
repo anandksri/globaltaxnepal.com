@@ -1,8 +1,10 @@
 import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+const maxAttachmentSize = 3 * 1024 * 1024;
 
 const enquirySchema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -60,25 +62,42 @@ export async function POST(request: Request) {
     process.env.ADMIN_2FA_EMAIL?.trim() ||
     "globaltaxnepal@gmail.com";
 
-  if (!smtpUser || !smtpPassword || !smtpFrom) {
+  const file = formData.get("file");
+  const uploadedFile = file instanceof File && file.size > 0 ? file : null;
+  if (uploadedFile && (uploadedFile.size > maxAttachmentSize || uploadedFile.name.length > 255 || uploadedFile.type.length > 255)) {
     return NextResponse.json(
-      {
-        success: false,
-        message: "Email delivery is not configured yet. Please contact us by phone.",
-      },
-      { status: 503 },
+      { success: false, message: "The attachment must be no larger than 3 MB and have a filename under 256 characters." },
+      { status: 400 },
     );
   }
 
-  const file = formData.get("file");
-  const attachment =
-    file instanceof File && file.size > 0
-      ? [{
-          filename: file.name,
-          content: Buffer.from(await file.arrayBuffer()),
-          contentType: file.type || undefined,
-        }]
-      : [];
+  let enquiryId: string;
+  let attachmentData: Buffer | null = null;
+  try {
+    attachmentData = uploadedFile ? Buffer.from(await uploadedFile.arrayBuffer()) : null;
+    const enquiry = await prisma.websiteEnquiry.create({
+      data: {
+        name: parsed.data.name,
+        whatsapp: parsed.data.whatsapp,
+        email: parsed.data.email || null,
+        subject: parsed.data.subject || null,
+        message: parsed.data.message,
+        attachmentName: uploadedFile?.name || null,
+        attachmentType: uploadedFile?.type || null,
+        attachmentData: attachmentData ? new Uint8Array(attachmentData) : null,
+      },
+      select: { id: true },
+    });
+    enquiryId = enquiry.id;
+  } catch (error) {
+    console.error("[public-enquiry] Enquiry could not be saved.", {
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
+    return NextResponse.json(
+      { success: false, message: "The enquiry could not be submitted right now. Please try WhatsApp or call us." },
+      { status: 503 },
+    );
+  }
 
   const safeName = escapeHtml(parsed.data.name);
   const safeWhatsapp = escapeHtml(parsed.data.whatsapp);
@@ -86,7 +105,9 @@ export async function POST(request: Request) {
   const safeSubject = escapeHtml(parsed.data.subject || "Website enquiry");
   const safeMessage = escapeHtml(parsed.data.message).replaceAll("\n", "<br>");
 
+  let emailSent = false;
   try {
+    if (!smtpUser || !smtpPassword || !smtpFrom) throw new Error("Email delivery is not configured.");
     const transport = nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
@@ -120,13 +141,13 @@ export async function POST(request: Request) {
           <p>${safeMessage}</p>
         </div>
       `,
-      attachments: attachment,
+      attachments: uploadedFile && attachmentData ? [{
+        filename: uploadedFile.name,
+        content: attachmentData,
+        contentType: uploadedFile.type || undefined,
+      }] : [],
     });
-
-    return NextResponse.json({
-      success: true,
-      message: "Thank you. Your enquiry has been sent to Global Tax Nepal.",
-    });
+    emailSent = true;
   } catch (error) {
     console.error("[public-enquiry] Email delivery failed.", {
       name: error instanceof Error ? error.name : "UnknownError",
@@ -135,12 +156,23 @@ export async function POST(request: Request) {
           ? error.code
           : undefined,
     });
-    return NextResponse.json(
-      {
-        success: false,
-        message: "The enquiry could not be sent right now. Please try WhatsApp or call us.",
-      },
-      { status: 502 },
-    );
   }
+
+  try {
+    await prisma.websiteEnquiry.update({
+      where: { id: enquiryId },
+      data: { emailStatus: emailSent ? "SENT" : "FAILED" },
+    });
+  } catch (error) {
+    console.error("[public-enquiry] Email status could not be saved.", {
+      enquiryId,
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
+  }
+  return NextResponse.json({
+    success: true,
+    message: emailSent
+      ? "Thank you. Your enquiry has been sent to Global Tax Nepal."
+      : "Your enquiry was received, but the email notification could not be sent. Our team can still see it in the dashboard.",
+  });
 }

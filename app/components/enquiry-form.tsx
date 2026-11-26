@@ -207,6 +207,7 @@ export function EnquiryForm() {
           name="file"
           type="file"
         />
+        <p className="mt-1 text-xs text-text-secondary">Maximum attachment size: 3 MB.</p>
       </div>
       <p
         className={`form-hint ${

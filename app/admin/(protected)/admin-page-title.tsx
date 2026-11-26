@@ -6,7 +6,9 @@ export function AdminPageTitle() {
   const pathname = usePathname();
   let title = "Overview";
 
-  if (pathname.startsWith("/admin/clients/monthly-data")) {
+  if (pathname.startsWith("/admin/enquiries")) {
+    title = "Website enquiries";
+  } else if (pathname.startsWith("/admin/clients/monthly-data")) {
     title = "Client monthly data";
   } else if (pathname === "/admin/clients") {
     title = "Clients";

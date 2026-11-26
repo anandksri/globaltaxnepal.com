@@ -59,6 +59,8 @@ export default async function AdminOverviewPage() {
     settings,
     studentCount,
     recentStudents,
+    recentEnquiries,
+    enquiryCount,
   ] =
     await Promise.all([
       prisma.client.count(),
@@ -94,6 +96,12 @@ export default async function AdminOverviewPage() {
             },
           })
         : Promise.resolve([]),
+      prisma.websiteEnquiry.findMany({
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 5,
+        select: { id: true, name: true, subject: true, createdAt: true },
+      }),
+      prisma.websiteEnquiry.count(),
     ]);
   const accountOverview = canViewAccounts ? await getAccountsOverview() : null;
 
@@ -107,6 +115,35 @@ export default async function AdminOverviewPage() {
         <SummaryItem label="Clients" value={clientCount} />
         <SummaryItem label="User accounts" value={userCount} />
         <SummaryItem label="Recorded activity" value={activityCount} />
+      </section>
+
+      <section aria-labelledby="enquiries-heading" className="border border-border bg-surface" id="enquiries">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
+          <div>
+            <h2 className="text-base font-semibold text-primary" id="enquiries-heading">Website enquiries</h2>
+            <p className="mt-1 text-sm text-text-secondary">{enquiryCount} {enquiryCount === 1 ? "enquiry" : "enquiries"} received</p>
+          </div>
+          <Link className="button button-secondary" href="/admin/enquiries">View all enquiries</Link>
+        </div>
+        {recentEnquiries.length ? (
+          <ul className="divide-y divide-border">
+            {recentEnquiries.map((enquiry) => (
+              <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-6" key={enquiry.id}>
+                <div>
+                  <Link className="text-sm font-medium text-secondary hover:text-primary" href={`/admin/enquiries#enquiry-${enquiry.id}`}>
+                    {enquiry.name}
+                  </Link>
+                  <p className="mt-1 text-xs text-text-secondary">{enquiry.subject || "Website enquiry"}</p>
+                </div>
+                <time className="text-xs text-text-secondary" dateTime={enquiry.createdAt.toISOString()}>
+                  {enquiry.createdAt.toLocaleString("en-NP", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kathmandu" })}
+                </time>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="px-5 py-6 text-sm text-text-secondary sm:px-6">No website enquiries have been received yet.</p>
+        )}
       </section>
 
       {canViewStudents && (

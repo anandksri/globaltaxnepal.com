@@ -111,6 +111,28 @@ enum PermissionAction {
   DELETE
 }
 
+enum EnquiryEmailStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model WebsiteEnquiry {
+  id String @id @default(cuid())
+  name String @db.VarChar(100)
+  whatsapp String @db.VarChar(30)
+  email String? @db.VarChar(254)
+  subject String? @db.VarChar(200)
+  message String @db.Text
+  attachmentName String? @db.VarChar(255)
+  attachmentType String? @db.VarChar(255)
+  attachmentData Bytes?
+  emailStatus EnquiryEmailStatus @default(PENDING)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt, id])
+}
+
 model User {
   id           String        @id @default(cuid())
   name         String?       @db.VarChar(100)

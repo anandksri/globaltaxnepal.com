@@ -10,6 +10,7 @@ import {
   Files,
   GraduationCap,
   LayoutDashboard,
+  Mail,
   ReceiptText,
   Settings,
   Users,
@@ -32,6 +33,7 @@ const navigationSections: { title: string; items: NavigationItem[] }[] = [
     title: "Dashboard",
     items: [
       { label: "Overview", href: "/admin", icon: LayoutDashboard },
+      { label: "Website enquiries", href: "/admin/enquiries", icon: Mail },
       { label: "My tasks", href: "/admin/my-tasks", icon: CheckSquare },
       { label: "Assign tasks", href: "/admin/tax/compliance", icon: CheckSquare },
       { label: "Business summary", href: "/admin#business-summary", icon: Building2 },
