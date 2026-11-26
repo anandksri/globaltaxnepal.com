@@ -44,7 +44,6 @@ if (!setup.success) {
         where: { email },
         update: {
           name: setup.data.ADMIN_NAME,
-          passwordHash,
           isActive: true,
           roleId: role.id,
         },

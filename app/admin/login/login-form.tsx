@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { loginAdmin } from "@/app/admin/actions";
 
 export function LoginForm() {
@@ -42,6 +43,9 @@ export function LoginForm() {
           type="password"
         />
       </div>
+      <Link className="block text-right text-sm font-medium text-secondary hover:text-primary" href="/admin/forgot-password">
+        Forgot password?
+      </Link>
       <label
         className="flex items-center gap-2 text-sm text-text"
         htmlFor="admin-remember-me"

@@ -51,6 +51,7 @@ export async function loginAdmin(
     id: string;
     email: string;
     passwordHash: string;
+    sessionVersion: number;
     isActive: boolean;
     role: { name: string };
   } | null;
@@ -63,6 +64,7 @@ export async function loginAdmin(
         id: true,
         email: true,
         passwordHash: true,
+        sessionVersion: true,
         isActive: true,
         role: { select: { name: true } },
       },
@@ -123,7 +125,7 @@ export async function loginAdmin(
   }
 
   try {
-    await createPendingTwoFactorSession(user.id, code, parsed.data.rememberMe);
+    await createPendingTwoFactorSession(user.id, code, parsed.data.rememberMe, user.sessionVersion);
   } catch (error) {
     console.error("[admin-auth] Pending verification session could not be created.", {
       name: error instanceof Error ? error.name : "UnknownError",
@@ -232,6 +234,7 @@ export async function resendAdminTwoFactor(
       user.id,
       code,
       pending.rememberMe,
+      pending.sessionVersion,
     );
   } catch (error) {
     return {

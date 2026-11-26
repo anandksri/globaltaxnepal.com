@@ -495,7 +495,11 @@ export async function changeOwnPassword(
     return { error: "Current password is incorrect." };
   }
   try {
-    await prisma.user.update({ where: { id: admin.id }, data: { passwordHash: await bcrypt.hash(parsed.data.newPassword, 12) } });
+    const updated = await prisma.user.updateMany({
+      where: { id: admin.id, passwordHash: user.passwordHash, isActive: true },
+      data: { passwordHash: await bcrypt.hash(parsed.data.newPassword, 12) },
+    });
+    if (updated.count !== 1) return { error: "Your account or password changed. Please sign in again." };
   } catch (error) {
     console.error("[admin-settings] Password change failed.", { name: error instanceof Error ? error.name : "UnknownError" });
     return { error: "Password could not be changed." };

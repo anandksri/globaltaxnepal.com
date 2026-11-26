@@ -38,11 +38,11 @@ export type AdminIdentity = {
   permissions: Array<{ module: AdminModule; action: PermissionAction }>;
 };
 
-export async function createAdminSession(userId: string, rememberMe = false) {
+export async function createAdminSession(userId: string, rememberMe = false, sessionVersion = 0) {
   const lifetimeSeconds = rememberMe
     ? rememberedSessionLifetimeSeconds
     : sessionLifetimeSeconds;
-  const token = await new SignJWT({})
+  const token = await new SignJWT({ sessionVersion })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(sessionIssuer)
     .setAudience(sessionAudience)
@@ -73,6 +73,7 @@ export async function createPendingTwoFactorSession(
   userId: string,
   code: string,
   rememberMe = false,
+  sessionVersion = 0,
 ) {
   const id = randomUUID();
   const challengeData = {
@@ -87,7 +88,7 @@ export async function createPendingTwoFactorSession(
     create: { id, userId, ...challengeData },
     select: { id: true },
   });
-  const token = await new SignJWT({ challengeId: challenge.id })
+  const token = await new SignJWT({ challengeId: challenge.id, sessionVersion })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(sessionIssuer)
     .setAudience(`${sessionAudience}-2fa`)
@@ -117,7 +118,8 @@ export async function getPendingTwoFactorSession() {
       issuer: sessionIssuer,
     });
 
-    if (typeof payload.challengeId !== "string") {
+    if (typeof payload.challengeId !== "string" ||
+      (payload.sessionVersion !== undefined && typeof payload.sessionVersion !== "number")) {
       return null;
     }
 
@@ -133,7 +135,7 @@ export async function getPendingTwoFactorSession() {
       },
     });
     if (!challenge || challenge.expiresAt <= new Date()) return null;
-    return { challengeId: challenge.id, ...challenge };
+    return { challengeId: challenge.id, ...challenge, sessionVersion: payload.sessionVersion ?? 0 };
   } catch {
     return null;
   }
@@ -188,7 +190,7 @@ export async function verifyTwoFactorCode(code: string) {
   });
   if (consumed.count !== 1) return { status: "expired" as const };
   await clearPendingTwoFactorSession();
-  await createAdminSession(pending.userId, pending.rememberMe);
+  await createAdminSession(pending.userId, pending.rememberMe, pending.sessionVersion);
   return { status: "verified" as const };
 }
 
@@ -238,6 +240,7 @@ export async function getCurrentAdmin(): Promise<AdminIdentity | null> {
   }
 
   let userId: string;
+  let sessionVersion: number;
   try {
     const { payload } = await jwtVerify(token, getSessionKey(), {
       algorithms: ["HS256"],
@@ -248,7 +251,9 @@ export async function getCurrentAdmin(): Promise<AdminIdentity | null> {
     if (typeof payload.sub !== "string") {
       return null;
     }
+    if (payload.sessionVersion !== undefined && typeof payload.sessionVersion !== "number") return null;
     userId = payload.sub;
+    sessionVersion = payload.sessionVersion ?? 0;
   } catch (error) {
     if (
       error instanceof joseErrors.JWTExpired ||
@@ -270,6 +275,7 @@ export async function getCurrentAdmin(): Promise<AdminIdentity | null> {
       name: true,
       email: true,
       isActive: true,
+      sessionVersion: true,
       phone: true,
       role: {
         select: {
@@ -280,7 +286,7 @@ export async function getCurrentAdmin(): Promise<AdminIdentity | null> {
     },
   });
 
-  if (!user || !user.isActive) {
+  if (!user || !user.isActive || user.sessionVersion !== sessionVersion) {
     return null;
   }
 
